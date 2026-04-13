@@ -19,18 +19,32 @@ class AuthService {
     required String password,
     required String nombre,
   }) async {
+    // Paso crítico: crear usuario en Firebase Auth
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
-    await credential.user?.sendEmailVerification();
-    await _firestore.collection('users').doc(credential.user!.uid).set({
-      'uid': credential.user!.uid,
-      'nombre': nombre,
-      'email': email,
-      'fechaRegistro': FieldValue.serverTimestamp(),
-      'onboardingCompletado': false,
-    });
+
+    // No crítico: enviar email de verificación (no bloquea si falla)
+    try {
+      await credential.user?.sendEmailVerification();
+    } catch (_) {}
+
+    // No crítico: guardar en Firestore con timeout (no bloquea si falla)
+    try {
+      await _firestore
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+            'uid': credential.user!.uid,
+            'nombre': nombre,
+            'email': email,
+            'fechaRegistro': FieldValue.serverTimestamp(),
+            'onboardingCompletado': false,
+          })
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {}
+
     return credential;
   }
 

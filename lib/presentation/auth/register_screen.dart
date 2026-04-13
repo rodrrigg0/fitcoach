@@ -89,33 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final email = _emailController.text.trim();
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        title: const Text(
-          '¡Cuenta creada!',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Text(
-          'Te hemos enviado un email de verificación a $email. '
-          'Revisa tu bandeja de entrada antes de continuar.',
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.go(AppConstants.routeOnboarding);
-            },
-            child: const Text('Entendido',
-                style: TextStyle(color: AppColors.primary)),
-          ),
-        ],
-      ),
-    );
+    context.go(AppConstants.routeOnboarding);
   }
 
   @override

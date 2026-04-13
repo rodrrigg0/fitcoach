@@ -6,6 +6,7 @@ import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/services/onboarding_provider.dart';
+import 'package:fitcoach/shared/widgets/number_picker_wheel.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Main screen
@@ -35,6 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   String? _selectedOption;
   OnboardingProvider? _provider;
   bool _initialized = false;
+  bool _bottomSheetShowing = false;
 
   @override
   void initState() {
@@ -75,9 +77,33 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _onProviderChange() {
     if (!mounted) return;
+
+    if (_provider!.onboardingCompletado) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go(
+            AppConstants.routeProfileLoading,
+            extra: _provider!.perfilEnConstruccion,
+          );
+        }
+      });
+      return;
+    }
+
+    // Mostrar selector numérico si la IA lo pide
+    final tipo = _provider!.tipoSelectorNumerico;
+    if (tipo != null && !_bottomSheetShowing) {
+      _bottomSheetShowing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _mostrarSelectorNumerico(tipo);
+      });
+    }
+
     final newStats = _provider!.statsVisibles;
     if (_prevStats != null) {
-      for (final key in ['nombre', 'objetivo', 'deporte', 'dias', 'peso']) {
+      for (final key in [
+        'nombre', 'objetivo', 'deporte', 'dias', 'peso', 'altura', 'edad'
+      ]) {
         final prev = _prevStats![key];
         final curr = newStats[key];
         if (prev != curr && curr != null && curr != '...') {
@@ -88,6 +114,101 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _prevStats = Map.from(newStats);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  // ── Selector numérico tipo rueda ───────────────────────────
+
+  ({int min, int max, int step, int initialValue, String suffix})
+      _getSelectorConfig(String tipo) {
+    return switch (tipo) {
+      'peso' => (min: 30, max: 200, step: 1, initialValue: 70, suffix: 'kg'),
+      'altura' =>
+        (min: 100, max: 220, step: 1, initialValue: 170, suffix: 'cm'),
+      'edad' => (min: 10, max: 80, step: 1, initialValue: 25, suffix: 'años'),
+      'sueno' => (min: 4, max: 12, step: 1, initialValue: 7, suffix: 'h'),
+      'presupuesto' =>
+        (min: 20, max: 300, step: 5, initialValue: 80, suffix: '€'),
+      _ => (min: 0, max: 100, step: 1, initialValue: 50, suffix: ''),
+    };
+  }
+
+  Future<void> _mostrarSelectorNumerico(String tipo) async {
+    final config = _getSelectorConfig(tipo);
+    final msgs = _provider!.mensajes;
+    String titulo = '';
+    for (int i = msgs.length - 1; i >= 0; i--) {
+      if (!msgs[i].esUsuario && !msgs[i].estaCargando) {
+        titulo = msgs[i].contenido;
+        break;
+      }
+    }
+    int selectedValue = config.initialValue;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, _) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.backgroundCard,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (titulo.isNotEmpty)
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              const SizedBox(height: 8),
+              NumberPickerWheel(
+                minValue: config.min,
+                maxValue: config.max,
+                initialValue: config.initialValue,
+                step: config.step,
+                suffix: config.suffix,
+                onChanged: (val) => selectedValue = val,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final val = selectedValue;
+                    Navigator.of(ctx).pop();
+                    _enviar('$val ${config.suffix}');
+                  },
+                  child: const Text('Confirmar'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (mounted) {
+      _provider?.limpiarSelectorNumerico();
+      _bottomSheetShowing = false;
+    }
   }
 
   void _checkStat(String key, bool condition) {
@@ -269,6 +390,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           _recentlyUpdated.contains('dias')),
       _StatData('Peso', sv['peso'] ?? '...',
           _recentlyUpdated.contains('peso')),
+      _StatData('Altura', sv['altura'] ?? '...',
+          _recentlyUpdated.contains('altura')),
+      _StatData('Edad', sv['edad'] ?? '...',
+          _recentlyUpdated.contains('edad')),
     ];
 
     return Stack(

@@ -10,4 +10,5 @@ class AppConstants {
   static const String routeRegister = '/register';
   static const String routeOnboarding = '/onboarding';
   static const String routeHome = '/home';
+  static const String routeProfileLoading = '/profile-loading';
 }

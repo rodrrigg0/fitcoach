@@ -1,3 +1,15 @@
+// IMPORTANTE — Reglas de seguridad de Firestore
+// Ve a Firebase Console → Firestore → Reglas y pon:
+//
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /{document=**} {
+//       allow read, write: if request.auth != null;
+//     }
+//   }
+// }
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
 

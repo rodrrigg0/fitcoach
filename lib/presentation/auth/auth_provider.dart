@@ -29,9 +29,12 @@ class AuthProvider extends ChangeNotifier {
           email: email, password: password, nombre: nombre);
       return true;
     } on FirebaseAuthException catch (e) {
-      _error = _mensajeError(e.code);
+      // Solo Firebase Auth puede bloquear el registro
+      _error = _mensajeErrorRegistro(e.code);
       return false;
     } catch (_) {
+      // Errores de red u otros no deben bloquear si Auth tuvo éxito
+      // (auth_service ya maneja internamente Firestore/email)
       _error = 'Error al crear la cuenta';
       return false;
     } finally {
@@ -48,7 +51,7 @@ class AuthProvider extends ChangeNotifier {
       await _authService.login(email: email, password: password);
       return true;
     } on FirebaseAuthException catch (e) {
-      _error = _mensajeError(e.code);
+      _error = _mensajeErrorLogin(e.code);
       return false;
     } catch (_) {
       _error = 'Error al iniciar sesión';
@@ -72,7 +75,20 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _mensajeError(String code) {
+  String _mensajeErrorRegistro(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'Este email ya está registrado';
+      case 'weak-password':
+        return 'La contraseña es demasiado débil';
+      case 'invalid-email':
+        return 'Formato de email no válido';
+      default:
+        return 'Error al crear la cuenta';
+    }
+  }
+
+  String _mensajeErrorLogin(String code) {
     switch (code) {
       case 'user-not-found':
         return 'Email no registrado';
@@ -82,10 +98,6 @@ class AuthProvider extends ChangeNotifier {
         return 'Email o contraseña incorrectos';
       case 'too-many-requests':
         return 'Demasiados intentos, espera un momento';
-      case 'email-already-in-use':
-        return 'Este email ya está registrado';
-      case 'weak-password':
-        return 'La contraseña es demasiado débil';
       case 'invalid-email':
         return 'Formato de email no válido';
       default:
