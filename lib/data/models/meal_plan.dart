@@ -91,6 +91,23 @@ class MealPlan {
             : DateTime.now(),
       );
 
+  MealPlan copyWith({
+    List<Meal>? comidas,
+    int? caloriasObjetivo,
+    double? proteinasObjetivo,
+    double? carbosObjetivo,
+    double? grasasObjetivo,
+    DateTime? fechaGeneracion,
+  }) =>
+      MealPlan(
+        comidas: comidas ?? this.comidas,
+        caloriasObjetivo: caloriasObjetivo ?? this.caloriasObjetivo,
+        proteinasObjetivo: proteinasObjetivo ?? this.proteinasObjetivo,
+        carbosObjetivo: carbosObjetivo ?? this.carbosObjetivo,
+        grasasObjetivo: grasasObjetivo ?? this.grasasObjetivo,
+        fechaGeneracion: fechaGeneracion ?? this.fechaGeneracion,
+      );
+
   Map<String, dynamic> toJson() => {
         'comidas': comidas.map((m) => m.toJson()).toList(),
         'caloriasObjetivo': caloriasObjetivo,

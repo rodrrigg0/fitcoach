@@ -11,6 +11,7 @@ import 'package:fitcoach/firebase_options.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 import 'package:fitcoach/data/services/onboarding_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/data/services/chat_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ class FitCoachApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()..cargarDatos()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp.router(
         title: 'FitCoach',

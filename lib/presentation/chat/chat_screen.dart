@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
-import 'package:fitcoach/data/services/ai_service.dart';
+import 'package:fitcoach/data/services/chat_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -13,26 +13,22 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final AIService _ai = AIService();
-  final List<ChatMessage> _mensajes = [];
-  bool _enviando = false;
+  final _controller = TextEditingController();
+  final _scrollController = ScrollController();
+  final Set<String> _animatedIds = {};
+  bool _inputHasText = false;
 
   @override
   void initState() {
     super.initState();
+    _controller.addListener(() {
+      final hasText = _controller.text.trim().isNotEmpty;
+      if (hasText != _inputHasText) {
+        setState(() => _inputHasText = hasText);
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<HomeProvider>();
-      final nombre = provider.perfil?.nombre ?? '';
-      final saludo = nombre.isNotEmpty
-          ? 'Hola $nombre, soy tu entrenador personal.'
-          : 'Hola, soy tu entrenador personal.';
-      setState(() {
-        _mensajes.add(ChatMessage.deIA(
-          '$saludo Puedes preguntarme sobre tu plan, suplementación, nutrición o cualquier duda sobre tu entrenamiento.',
-        ));
-      });
+      if (mounted) context.read<ChatProvider>().inicializar();
     });
   }
 
@@ -43,276 +39,736 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  Future<void> _enviar() async {
-    final texto = _controller.text.trim();
-    if (texto.isEmpty || _enviando) return;
-
-    final provider = context.read<HomeProvider>();
-    _controller.clear();
-
-    setState(() {
-      _mensajes.add(ChatMessage.deUsuario(texto));
-      _mensajes.add(ChatMessage.cargando());
-      _enviando = true;
-    });
-    _scrollToBottom();
-
-    try {
-      final historial = _mensajes
-          .where((m) => !m.estaCargando)
-          .take(_mensajes.length - 2)
-          .toList();
-
-      final respuesta = await _ai.enviarMensaje(
-        historial: historial,
-        mensajeUsuario: texto,
-        systemPrompt: provider.buildSystemPromptChat(),
-      );
-
-      setState(() {
-        _mensajes.removeLast();
-        _mensajes.add(ChatMessage.deIA(respuesta));
-        _enviando = false;
-      });
-    } catch (e) {
-      setState(() {
-        _mensajes.removeLast();
-        _mensajes.add(ChatMessage.deIA(
-            'Lo siento, ocurrió un error. Por favor intenta de nuevo.'));
-        _enviando = false;
-      });
-    }
-    _scrollToBottom();
+  bool _shouldAnimate(ChatMessage m) {
+    if (_animatedIds.contains(m.id)) return false;
+    _animatedIds.add(m.id);
+    return true;
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+  Future<void> _enviar([String? override]) async {
+    final texto = override ?? _controller.text.trim();
+    if (texto.isEmpty) return;
+    if (override == null) _controller.clear();
+    await context.read<ChatProvider>().enviarMensaje(texto);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 1.5),
-              ),
-              child: const Center(
-                child: Text(
-                  'FC',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<ChatProvider>(
+      builder: (context, chat, _) {
+        if (chat.planActualizado) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              context.read<HomeProvider>().cargarDatos();
+              chat.resetPlanActualizado();
+            }
+          });
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Column(
               children: [
-                Text(
-                  'Entrenador FitCoach',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: chat.tieneHistorial
+                        ? _buildMessageList(chat)
+                        : _buildWelcomeState(chat),
                   ),
                 ),
-                Text(
-                  'Siempre disponible',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
+                _buildInputBar(chat),
               ],
             ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _mensajes.length,
-              itemBuilder: (context, i) => _BubbleWidget(
-                mensaje: _mensajes[i],
+          ),
+        );
+      },
+    );
+  }
+
+  // ─── Estado vacío ────────────────────────────────────────────
+
+  Widget _buildWelcomeState(ChatProvider chat) {
+    final nombre = chat.perfil?.nombre ?? '';
+    final deporte = chat.perfil?.deportes.firstOrNull ?? 'tu deporte';
+    final sugerencias = _getSugerencias(chat, deporte);
+
+    return Column(
+      key: const ValueKey('welcome'),
+      children: [
+        Expanded(
+          flex: 42,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary, width: 2),
+                ),
+                child: const Center(
+                  child: Text(
+                    'FC',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ),
+              const SizedBox(height: 20),
+              const Text(
+                '¿En qué puedo',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w300,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Text(
+                'ayudarte hoy?',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                nombre.isNotEmpty
+                    ? 'Hola $nombre, soy tu entrenador personal'
+                    : 'Hola, soy tu entrenador personal',
+                style: const TextStyle(
+                  color: Color(0xFF888888),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 58,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(
+                  child: Text(
+                    'SUGERENCIAS',
+                    style: TextStyle(
+                      color: Color(0xFF444444),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...sugerencias.map(_buildSugerencia),
+              ],
             ),
           ),
-          _buildInputBar(),
-        ],
+        ),
+      ],
+    );
+  }
+
+  List<_Sugerencia> _getSugerencias(ChatProvider chat, String deporte) {
+    final list = <_Sugerencia>[];
+    if (chat.planEntrenamiento != null) {
+      list.add(const _Sugerencia(
+        'Modifica mi entrenamiento de hoy',
+        'Ajusta la sesión según cómo me encuentro',
+      ));
+      list.add(const _Sugerencia(
+        '¿Qué suplementos debo tomar?',
+        'Recomendación personalizada para mi objetivo',
+      ));
+    }
+    if (chat.planNutricion != null) {
+      list.add(const _Sugerencia(
+        'Cambia mi cena de hoy',
+        'Sugiere una alternativa más económica',
+      ));
+    }
+    list.add(_Sugerencia(
+      '¿Cómo mejoro mi rendimiento en $deporte?',
+      'Consejos específicos para tu disciplina',
+    ));
+    return list;
+  }
+
+  Widget _buildSugerencia(_Sugerencia s) {
+    return GestureDetector(
+      onTap: () => _enviar(s.titulo),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(14),
+          border:
+              Border.all(color: const Color(0xFF2A2A2A), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    s.titulo,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    s.descripcion,
+                    style: const TextStyle(
+                      color: Color(0xFF888888),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                color: Color(0xFF444444), size: 16),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInputBar() {
+  // ─── Lista de mensajes ───────────────────────────────────────
+
+  Widget _buildMessageList(ChatProvider chat) {
+    final msgs = chat.mensajes;
+    return ListView.builder(
+      key: const ValueKey('messages'),
+      controller: _scrollController,
+      reverse: true,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      itemCount: msgs.length,
+      itemBuilder: (ctx, i) {
+        final msg = msgs[msgs.length - 1 - i];
+        if (msg.estaCargando) return const TypingIndicator();
+        return _AnimatedMessage(
+          animate: _shouldAnimate(msg),
+          child: _BubbleWidget(mensaje: msg),
+        );
+      },
+    );
+  }
+
+  // ─── Campo de entrada ────────────────────────────────────────
+
+  Widget _buildInputBar(ChatProvider chat) {
+    final disableAnimations = MediaQuery.of(context).disableAnimations;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       decoration: const BoxDecoration(
         color: AppColors.background,
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 0.5),
-        ),
+            top: BorderSide(color: Color(0xFF1A1A1A), width: 0.5)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.backgroundCard,
-                borderRadius: BorderRadius.circular(24),
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(24),
+          border:
+              Border.all(color: const Color(0xFF2A2A2A), width: 0.5),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
               child: TextField(
                 controller: _controller,
                 style: const TextStyle(
                     color: AppColors.textPrimary, fontSize: 14),
                 maxLines: 4,
                 minLines: 1,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _enviar(),
+                textInputAction: TextInputAction.newline,
                 decoration: const InputDecoration(
-                  hintText: 'Pregunta algo...',
-                  hintStyle: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 14),
+                  hintText: 'Escribe tu pregunta...',
+                  hintStyle:
+                      TextStyle(color: Color(0xFF444444), fontSize: 14),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: _enviar,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _enviando
-                    ? AppColors.backgroundElevated
-                    : AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: _enviando
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.textSecondary,
+            AnimatedSwitcher(
+              duration: Duration(
+                  milliseconds: disableAnimations ? 0 : 200),
+              child: (_inputHasText && !chat.enviando)
+                  ? GestureDetector(
+                      key: const ValueKey('send'),
+                      onTap: _enviar,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_upward,
+                          color: AppColors.background,
+                          size: 18,
+                        ),
                       ),
                     )
-                  : const Icon(Icons.arrow_upward,
-                      color: AppColors.background, size: 20),
+                  : const SizedBox(
+                      key: ValueKey('empty'), width: 8),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
+// ─── Sugerencia data class ────────────────────────────────────
+
+class _Sugerencia {
+  final String titulo;
+  final String descripcion;
+  const _Sugerencia(this.titulo, this.descripcion);
+}
+
+// ─── Typing indicator ─────────────────────────────────────────
+
+class TypingIndicator extends StatefulWidget {
+  const TypingIndicator({super.key});
+
+  @override
+  State<TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<TypingIndicator>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<double>> _animations;
+  static const _maxHeights = [18.0, 26.0, 22.0, 28.0, 16.0];
+  int _textIdx = 0;
+
+  static const _texts = [
+    'Analizando...',
+    'Procesando...',
+    'Preparando respuesta...',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      5,
+      (i) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 600),
+      ),
+    );
+    _animations = _controllers.asMap().entries.map((e) {
+      return Tween<double>(begin: 4, end: _maxHeights[e.key]).animate(
+        CurvedAnimation(parent: e.value, curve: Curves.easeInOut),
+      );
+    }).toList();
+
+    for (int i = 0; i < 5; i++) {
+      Future.delayed(Duration(milliseconds: i * 120), () {
+        if (mounted) _controllers[i].repeat(reverse: true);
+      });
+    }
+
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return false;
+      setState(() => _textIdx = (_textIdx + 1) % _texts.length);
+      return mounted;
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final disableAnimations = MediaQuery.of(context).disableAnimations;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12, right: 60),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+            bottomLeft: Radius.circular(4),
+          ),
+          border: Border.all(
+              color: const Color(0xFF2A2A2A), width: 0.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: List.generate(5, (i) {
+                if (disableAnimations) {
+                  return Container(
+                    width: 3,
+                    height: 16,
+                    margin: EdgeInsets.only(left: i > 0 ? 3 : 0),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  );
+                }
+                return AnimatedBuilder(
+                  animation: _animations[i],
+                  builder: (ctx, child) => Container(
+                    width: 3,
+                    height: _animations[i].value,
+                    margin: EdgeInsets.only(left: i > 0 ? 3 : 0),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 6),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: Text(
+                _texts[_textIdx],
+                key: ValueKey(_textIdx),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Animación de entrada ─────────────────────────────────────
+
+class _AnimatedMessage extends StatefulWidget {
+  final Widget child;
+  final bool animate;
+
+  const _AnimatedMessage({required this.child, required this.animate});
+
+  @override
+  State<_AnimatedMessage> createState() => _AnimatedMessageState();
+}
+
+class _AnimatedMessageState extends State<_AnimatedMessage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _opacity = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _slide = Tween<Offset>(
+            begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+    if (widget.animate &&
+        !MediaQueryData.fromView(View.of(context)).disableAnimations) {
+      _ctrl.forward();
+    } else {
+      _ctrl.value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
+}
+
+// ─── Burbuja de mensaje ───────────────────────────────────────
+
 class _BubbleWidget extends StatelessWidget {
   final ChatMessage mensaje;
-
   const _BubbleWidget({required this.mensaje});
 
   @override
   Widget build(BuildContext context) {
-    if (mensaje.estaCargando) {
-      return Align(
-        alignment: Alignment.centerLeft,
+    // Mensaje de sistema
+    if (mensaje.esMensajeSistema) {
+      return Center(
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12, right: 60),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.backgroundCard,
-            borderRadius: BorderRadius.circular(18),
+            color: const Color(0x10C8F135),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: const Color(0x40C8F135), width: 0.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _dot(0),
-              const SizedBox(width: 4),
-              _dot(1),
-              const SizedBox(width: 4),
-              _dot(2),
+              const Icon(Icons.check_circle_outline,
+                  color: AppColors.primary, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                mensaje.contenido,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
       );
     }
 
+    // Mensaje del usuario
+    if (mensaje.esUsuario) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12, left: 60),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          decoration: const BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(4),
+            ),
+          ),
+          child: Text(
+            mensaje.contenido,
+            style: const TextStyle(
+              color: AppColors.background,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Mensaje del entrenador (IA)
     return Align(
-      alignment:
-          mensaje.esUsuario ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.only(
-          bottom: 12,
-          left: mensaje.esUsuario ? 60 : 0,
-          right: mensaje.esUsuario ? 0 : 60,
+        margin: const EdgeInsets.only(bottom: 12, right: 60),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: mensaje.esUsuario
-              ? AppColors.primary
-              : AppColors.backgroundCard,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(mensaje.esUsuario ? 18 : 4),
-            bottomRight: Radius.circular(mensaje.esUsuario ? 4 : 18),
+          color: const Color(0xFF1A1A1A),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+            bottomLeft: Radius.circular(4),
           ),
+          border: Border.all(
+              color: const Color(0xFF2A2A2A), width: 0.5),
         ),
-        child: Text(
-          mensaje.contenido,
-          style: TextStyle(
-            color: mensaje.esUsuario
-                ? AppColors.background
-                : AppColors.textPrimary,
-            fontSize: 14,
-            height: 1.5,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _renderizarMensaje(mensaje.contenido),
+            const SizedBox(height: 6),
+            Text(
+              _formatTime(mensaje.timestamp),
+              style: const TextStyle(
+                color: Color(0xFF444444),
+                fontSize: 10,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _dot(int idx) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.4, end: 1.0),
-      duration: Duration(milliseconds: 600 + idx * 200),
-      builder: (context, v, child) => Opacity(
-        opacity: v,
-        child: Container(
-          width: 6,
-          height: 6,
-          decoration: const BoxDecoration(
-            color: AppColors.textSecondary,
-            shape: BoxShape.circle,
+  Widget _renderizarMensaje(String texto) {
+    final lines = texto.split('\n');
+    final widgets = <Widget>[];
+
+    for (final line in lines) {
+      if (line.trim().isEmpty) {
+        widgets.add(const SizedBox(height: 6));
+        continue;
+      }
+      final stripped = line.trimLeft();
+
+      // Bullet
+      if (stripped.startsWith('- ') || stripped.startsWith('• ')) {
+        final content = stripped.substring(2);
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(top: 6, right: 8),
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Text(content,
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.6)),
+              ),
+            ],
+          ),
+        ));
+        continue;
+      }
+
+      // Numbered list
+      final numMatch =
+          RegExp(r'^(\d+)\.\s(.*)').firstMatch(stripped);
+      if (numMatch != null) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${numMatch.group(1)}.',
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(numMatch.group(2) ?? '',
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.6)),
+              ),
+            ],
+          ),
+        ));
+        continue;
+      }
+
+      // Bold: **text**
+      if (stripped.startsWith('**') &&
+          stripped.endsWith('**') &&
+          stripped.length > 4) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Text(
+            stripped.substring(2, stripped.length - 2),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.6,
+            ),
+          ),
+        ));
+        continue;
+      }
+
+      // Normal text
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(bottom: 3),
+        child: Text(
+          line,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            height: 1.6,
           ),
         ),
-      ),
+      ));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
     );
+  }
+
+  String _formatTime(DateTime t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 }

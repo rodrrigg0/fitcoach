@@ -342,12 +342,45 @@ Estructura exacta:
 Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Responde SOLO con JSON válido, sin texto extra.''';
   }
 
+  Future<void> actualizarObjetivosMacros({
+    required int proteinas,
+    required int carbos,
+    required int grasas,
+  }) async {
+    if (_planNutricion == null) return;
+    final cals = proteinas * 4 + carbos * 4 + grasas * 9;
+    _planNutricion = MealPlan(
+      comidas: _planNutricion!.comidas,
+      caloriasObjetivo: cals,
+      proteinasObjetivo: proteinas.toDouble(),
+      carbosObjetivo: carbos.toDouble(),
+      grasasObjetivo: grasas.toDouble(),
+      fechaGeneracion: _planNutricion!.fechaGeneracion,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyMealPlan, jsonEncode(_planNutricion!.toJson()));
+    notifyListeners();
+    await generarPlanNutricion();
+  }
+
   String _buildNutritionPrompt() {
     final p = _perfil!;
-    final cals = caloriasObjetivo;
-    final proteinas = ((cals * 0.30) / 4).round();
-    final carbos = ((cals * 0.45) / 4).round();
-    final grasas = ((cals * 0.25) / 9).round();
+    // Use existing plan objectives if available (may have been manually adjusted)
+    final int cals;
+    final int proteinas;
+    final int carbos;
+    final int grasas;
+    if (_planNutricion != null) {
+      cals = _planNutricion!.caloriasObjetivo;
+      proteinas = _planNutricion!.proteinasObjetivo.round();
+      carbos = _planNutricion!.carbosObjetivo.round();
+      grasas = _planNutricion!.grasasObjetivo.round();
+    } else {
+      cals = caloriasObjetivo;
+      proteinas = ((cals * 0.30) / 4).round();
+      carbos = ((cals * 0.45) / 4).round();
+      grasas = ((cals * 0.25) / 9).round();
+    }
     return '''Genera un plan nutricional diario en JSON con esta estructura exacta:
 {
   "comidas": [

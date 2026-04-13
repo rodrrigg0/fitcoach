@@ -6,6 +6,7 @@ class ChatMessage {
   final bool esUsuario;
   final DateTime timestamp;
   final bool estaCargando;
+  final bool esMensajeSistema;
 
   const ChatMessage({
     required this.id,
@@ -13,6 +14,7 @@ class ChatMessage {
     required this.esUsuario,
     required this.timestamp,
     this.estaCargando = false,
+    this.esMensajeSistema = false,
   });
 
   factory ChatMessage.deUsuario(String contenido) => ChatMessage(
@@ -37,12 +39,21 @@ class ChatMessage {
         estaCargando: true,
       );
 
+  factory ChatMessage.sistema(String contenido) => ChatMessage(
+        id: const Uuid().v4(),
+        contenido: contenido,
+        esUsuario: false,
+        timestamp: DateTime.now(),
+        esMensajeSistema: true,
+      );
+
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
         id: json['id'] as String,
         contenido: json['contenido'] as String,
         esUsuario: json['esUsuario'] as bool,
         timestamp: DateTime.parse(json['timestamp'] as String),
         estaCargando: json['estaCargando'] as bool? ?? false,
+        esMensajeSistema: json['esMensajeSistema'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -51,6 +62,7 @@ class ChatMessage {
         'esUsuario': esUsuario,
         'timestamp': timestamp.toIso8601String(),
         'estaCargando': estaCargando,
+        'esMensajeSistema': esMensajeSistema,
       };
 
   ChatMessage copyWith({
@@ -59,6 +71,7 @@ class ChatMessage {
     bool? esUsuario,
     DateTime? timestamp,
     bool? estaCargando,
+    bool? esMensajeSistema,
   }) =>
       ChatMessage(
         id: id ?? this.id,
@@ -66,5 +79,6 @@ class ChatMessage {
         esUsuario: esUsuario ?? this.esUsuario,
         timestamp: timestamp ?? this.timestamp,
         estaCargando: estaCargando ?? this.estaCargando,
+        esMensajeSistema: esMensajeSistema ?? this.esMensajeSistema,
       );
 }

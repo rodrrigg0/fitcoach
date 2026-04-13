@@ -93,6 +93,33 @@ class WorkoutDay {
         'completado': completado,
       };
 
+  WorkoutDay copyWith({
+    String? tipo,
+    String? titulo,
+    String? descripcion,
+    int? duracion,
+    String? lugar,
+    List<Exercise>? ejercicios,
+    String? porQueHoy,
+    List<String>? objetivos,
+    String? consejo,
+    List<String>? caracteristicas,
+    bool? completado,
+  }) =>
+      WorkoutDay(
+        tipo: tipo ?? this.tipo,
+        titulo: titulo ?? this.titulo,
+        descripcion: descripcion ?? this.descripcion,
+        duracion: duracion ?? this.duracion,
+        lugar: lugar ?? this.lugar,
+        ejercicios: ejercicios ?? this.ejercicios,
+        porQueHoy: porQueHoy ?? this.porQueHoy,
+        objetivos: objetivos ?? this.objetivos,
+        consejo: consejo ?? this.consejo,
+        caracteristicas: caracteristicas ?? this.caracteristicas,
+        completado: completado ?? this.completado,
+      );
+
   static WorkoutDay descanso() => WorkoutDay(
         tipo: 'descanso',
         titulo: 'Día de recuperación',
