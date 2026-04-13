@@ -7,12 +7,12 @@ class AIService {
   static const String _endpoint =
       'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-opus-4-5';
-  static const int _maxTokens = 1024;
 
   Future<String> enviarMensaje({
     required List<ChatMessage> historial,
     required String mensajeUsuario,
     required String systemPrompt,
+    int maxTokens = 1024,
   }) async {
     final apiKey = dotenv.env['ANTHROPIC_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -42,7 +42,7 @@ class AIService {
       },
       body: jsonEncode({
         'model': _model,
-        'max_tokens': _maxTokens,
+        'max_tokens': maxTokens,
         'system': systemPrompt,
         'messages': messages,
       }),

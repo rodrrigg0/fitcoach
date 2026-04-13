@@ -11,4 +11,7 @@ class AppConstants {
   static const String routeOnboarding = '/onboarding';
   static const String routeHome = '/home';
   static const String routeProfileLoading = '/profile-loading';
+  static const String routeSessionDetail = '/session-detail';
+  static const String routeActiveSession = '/active-session';
+  static const String routeProfile = '/profile';
 }

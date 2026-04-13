@@ -1,602 +1,584 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
-import 'package:fitcoach/data/services/ai_service.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
 
+// ─────────────────────────────────────────────────────────────
+// Enums y clases del sistema de pasos fijos
+// ─────────────────────────────────────────────────────────────
+
+enum TipoPregunta {
+  textoLibre,
+  opcionUnica,
+  opcionMultiple,
+  ruedaNumerica,
+  deportes,
+  siNo,
+}
+
+class OnboardingStep {
+  final int numero;
+  final String categoria;
+  final String pregunta;
+  final TipoPregunta tipo;
+  final List<String>? opciones;
+  final int? minValor;
+  final int? maxValor;
+  final int? stepValor;
+  final String? sufijo;
+
+  const OnboardingStep({
+    required this.numero,
+    required this.categoria,
+    required this.pregunta,
+    required this.tipo,
+    this.opciones,
+    this.minValor,
+    this.maxValor,
+    this.stepValor,
+    this.sufijo,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Provider principal
+// ─────────────────────────────────────────────────────────────
+
 class OnboardingProvider extends ChangeNotifier {
-  final AIService _aiService = AIService();
+  // ── Pasos fijos ───────────────────────────────────────────
 
-  List<ChatMessage> _mensajes = [];
+  static const List<OnboardingStep> pasos = [
+    OnboardingStep(
+      numero: 1,
+      categoria: 'PERSONAL',
+      pregunta: '¿Cuál es tu nombre?',
+      tipo: TipoPregunta.textoLibre,
+    ),
+    OnboardingStep(
+      numero: 2,
+      categoria: 'PERSONAL',
+      pregunta: '¿Cuántos años tienes?',
+      tipo: TipoPregunta.ruedaNumerica,
+      minValor: 10,
+      maxValor: 80,
+      stepValor: 1,
+      sufijo: 'años',
+    ),
+    OnboardingStep(
+      numero: 3,
+      categoria: 'PERSONAL',
+      pregunta: '¿Cuál es tu sexo biológico?',
+      tipo: TipoPregunta.opcionUnica,
+      opciones: ['Hombre', 'Mujer', 'Otro'],
+    ),
+    OnboardingStep(
+      numero: 4,
+      categoria: 'PERSONAL',
+      pregunta: '¿Cuánto pesas?',
+      tipo: TipoPregunta.ruedaNumerica,
+      minValor: 30,
+      maxValor: 200,
+      stepValor: 1,
+      sufijo: 'kg',
+    ),
+    OnboardingStep(
+      numero: 5,
+      categoria: 'PERSONAL',
+      pregunta: '¿Cuánto mides?',
+      tipo: TipoPregunta.ruedaNumerica,
+      minValor: 100,
+      maxValor: 220,
+      stepValor: 1,
+      sufijo: 'cm',
+    ),
+    OnboardingStep(
+      numero: 6,
+      categoria: 'OBJETIVO',
+      pregunta: '¿Cuál es tu objetivo principal?',
+      tipo: TipoPregunta.opcionUnica,
+      opciones: [
+        'Perder grasa',
+        'Ganar músculo',
+        'Recomposición',
+        'Rendimiento deportivo',
+        'Mantener peso',
+        'Salud general',
+      ],
+    ),
+    OnboardingStep(
+      numero: 7,
+      categoria: 'DEPORTE',
+      pregunta: '¿Qué deporte o actividad quieres practicar?',
+      tipo: TipoPregunta.deportes,
+    ),
+    OnboardingStep(
+      numero: 8,
+      categoria: 'DEPORTE',
+      pregunta: '¿Quieres complementar con gimnasio?',
+      tipo: TipoPregunta.opcionUnica,
+      opciones: [
+        'Sí, como complemento',
+        'No, solo mi deporte',
+        'Ya entreno en gimnasio',
+      ],
+    ),
+    OnboardingStep(
+      numero: 9,
+      categoria: 'ENTRENAMIENTO',
+      pregunta: '¿Cuántos días por semana puedes entrenar?',
+      tipo: TipoPregunta.opcionUnica,
+      opciones: [
+        '2 días',
+        '3 días',
+        '4 días',
+        '5 días',
+        '6 días',
+        '7 días',
+      ],
+    ),
+    OnboardingStep(
+      numero: 10,
+      categoria: 'ENTRENAMIENTO',
+      pregunta: '¿Cuánto tiempo por sesión?',
+      tipo: TipoPregunta.opcionUnica,
+      opciones: [
+        '30 min',
+        '45 min',
+        '60 min',
+        '90 min',
+        'Más de 90 min',
+      ],
+    ),
+    OnboardingStep(
+      numero: 11,
+      categoria: 'ENTRENAMIENTO',
+      pregunta: '¿Tienes alguna lesión o limitación física?',
+      tipo: TipoPregunta.siNo,
+      opciones: ['No tengo lesiones', 'Sí tengo lesiones'],
+    ),
+    OnboardingStep(
+      numero: 12,
+      categoria: 'NUTRICIÓN',
+      pregunta: '¿Sigues algún tipo de dieta?',
+      tipo: TipoPregunta.opcionUnica,
+      opciones: [
+        'Omnívoro',
+        'Vegetariano',
+        'Vegano',
+        'Sin gluten',
+        'Keto',
+        'Sin restricciones',
+      ],
+    ),
+    OnboardingStep(
+      numero: 13,
+      categoria: 'NUTRICIÓN',
+      pregunta: '¿Tienes alergias alimentarias?',
+      tipo: TipoPregunta.siNo,
+      opciones: ['No tengo alergias', 'Sí tengo alergias'],
+    ),
+    OnboardingStep(
+      numero: 14,
+      categoria: 'NUTRICIÓN',
+      pregunta: '¿Cuál es tu presupuesto semanal en alimentación?',
+      tipo: TipoPregunta.ruedaNumerica,
+      minValor: 20,
+      maxValor: 300,
+      stepValor: 5,
+      sufijo: '€',
+    ),
+    OnboardingStep(
+      numero: 15,
+      categoria: 'HÁBITOS',
+      pregunta: '¿Cuántas horas duermes normalmente?',
+      tipo: TipoPregunta.ruedaNumerica,
+      minValor: 4,
+      maxValor: 12,
+      stepValor: 1,
+      sufijo: 'h',
+    ),
+    OnboardingStep(
+      numero: 16,
+      categoria: 'HÁBITOS',
+      pregunta: '¿Tomas algún suplemento actualmente?',
+      tipo: TipoPregunta.opcionMultiple,
+      opciones: [
+        'Ninguno',
+        'Proteína whey',
+        'Creatina',
+        'BCAA',
+        'Cafeína',
+        'Vitamina D',
+        'Omega 3',
+        'Magnesio',
+        'Multivitamínico',
+        'Pre-entreno',
+        'Glutamina',
+        'ZMA',
+        'Colágeno',
+        'Otro',
+      ],
+    ),
+  ];
+
+  // ── Estado interno ────────────────────────────────────────
+
+  int _pasoActual = 0;
+
+  // Datos recogidos
+  String _nombre = '';
+  int _edad = 25;
+  String _sexo = '';
+  double _peso = 70;
+  double _altura = 170;
+  String _objetivo = '';
+  List<String> _deportes = [];
+  String _complementoGimnasio = '';
+  int _dias = 3;
+  int _minutos = 60;
+  String _lesiones = 'Ninguna';
+  String _tipoDieta = '';
+  String _alergias = 'Ninguna';
+  int _presupuesto = 80;
+  int _horasSueno = 7;
+  List<String> _suplementos = [];
+
   UserProfile _perfilEnConstruccion = UserProfile.vacio();
-  bool _estaCargando = false;
   bool _onboardingCompletado = false;
-  String? _tipoSelectorNumerico;
 
-  List<String> _opcionesActuales = [];
   Set<String> _partesIluminadas = {};
   Map<String, String> _statsVisibles = {
     'nombre': '...',
     'objetivo': '...',
     'deporte': '...',
+    'lugar': '...',
     'dias': '...',
     'peso': '...',
     'altura': '...',
     'edad': '...',
   };
 
-  List<ChatMessage> get mensajes => List.unmodifiable(_mensajes);
+  // ── Getters públicos ──────────────────────────────────────
+
+  int get pasoActual => _pasoActual;
+  OnboardingStep get stepActual => pasos[_pasoActual];
   UserProfile get perfilEnConstruccion => _perfilEnConstruccion;
-  bool get estaCargando => _estaCargando;
   bool get onboardingCompletado => _onboardingCompletado;
-  List<String> get opcionesActuales => List.unmodifiable(_opcionesActuales);
   Set<String> get partesIluminadas => Set.unmodifiable(_partesIluminadas);
   Map<String, String> get statsVisibles => Map.unmodifiable(_statsVisibles);
-  String? get tipoSelectorNumerico => _tipoSelectorNumerico;
 
-  String get systemPromptOnboarding => '''
-Eres el asistente de bienvenida de FitCoach, una app de entrenamiento y nutrición personalizada para cualquier deporte.
-
-Tu misión es recopilar información del usuario de forma conversacional, amigable y natural, como si fuera una conversación con un entrenador personal.
-
-Debes recopilar TODA esta información en orden natural:
-1. Nombre
-2. Edad y sexo biológico
-3. Peso y altura actuales
-4. Objetivo principal (perder grasa, ganar músculo, recomposición, mejorar rendimiento, mantener, salud general)
-5. Deportes que practica o quiere practicar (puede ser cualquier deporte, no solo gimnasio)
-6. Días disponibles por semana y minutos por sesión
-7. Dónde entrena (gimnasio, casa, exterior, mixto)
-8. Lesiones o limitaciones físicas
-9. Tipo de dieta y alergias alimentarias
-10. Presupuesto semanal aproximado en alimentación (en euros)
-11. Horas de sueño habituales
-12. Suplementos que toma actualmente
-
-Reglas importantes:
-- Haz UNA o DOS preguntas por mensaje máximo
-- Sé cercano, motivador y usa el nombre del usuario cuando ya lo sepas
-- Acepta cualquier deporte: fútbol, natación, ciclismo, artes marciales, yoga, running, padel, tenis, etc.
-- Si el usuario da información incompleta, pide aclaración de forma natural
-- Cuando tengas TODA la información, responde con un JSON válido con esta estructura exacta y nada más:
-PERFIL_COMPLETO:{"nombre":"...","edad":0,"sexo":"...","peso":0.0,"altura":0.0,"objetivo":"...","nivelActividad":"...","deportes":[],"diasEntrenamiento":0,"minutosSesion":0,"lugarEntrenamiento":"...","lesiones":"...","tipoDieta":"...","alergias":[],"presupuestoSemanal":0,"horasSueno":0,"suplementosActuales":[]}
-- Antes del JSON muestra un mensaje de cierre motivador
-
-SISTEMA DE OPCIONES RÁPIDAS:
-Cuando hagas una pregunta con opciones cerradas, añade al FINAL de tu mensaje esta etiqueta exacta (sin espacios antes del corchete):
-OPCIONES:[opcion1|opcion2|opcion3|opcion4]
-
-Usa OPCIONES: obligatoriamente para estas preguntas:
-- Objetivo principal: OPCIONES:[Perder grasa|Ganar músculo|Recomposición|Rendimiento|Mantener|Salud general]
-- Días disponibles: OPCIONES:[2 días|3 días|4 días|5 días|6 días|7 días]
-- Tiempo por sesión: OPCIONES:[30 min|45 min|60 min|90 min]
-- Lugar de entrenamiento: OPCIONES:[Gimnasio|Casa|Exterior|Mixto]
-- Tipo de dieta: OPCIONES:[Omnívoro|Vegetariano|Vegano|Sin gluten|Keto|Otro]
-- Nivel de actividad actual: OPCIONES:[Sedentario|Ligero|Moderado|Activo|Muy activo]
-
-Para preguntas abiertas (nombre, peso, altura, edad, deportes específicos, lesiones, alergias, suplementos, presupuesto, horas de sueño) NO uses OPCIONES:.
-''';
+  // ── Ciclo de vida ─────────────────────────────────────────
 
   void iniciarOnboarding() {
-    _mensajes = [];
+    _pasoActual = 0;
     _perfilEnConstruccion = UserProfile.vacio();
     _onboardingCompletado = false;
-    _opcionesActuales = [];
     _partesIluminadas = {};
-    _tipoSelectorNumerico = null;
     _statsVisibles = {
       'nombre': '...',
       'objetivo': '...',
       'deporte': '...',
+      'lugar': '...',
       'dias': '...',
       'peso': '...',
       'altura': '...',
       'edad': '...',
     };
-    _mensajes.add(
-      ChatMessage.deIA(
-        '¡Hola! Soy tu asistente personal de FitCoach 👋\n'
-        'Voy a hacerte unas preguntas para crear tu perfil '
-        'completamente personalizado. ¿Cómo te llamas?',
-      ),
+    _nombre = '';
+    _edad = 25;
+    _sexo = '';
+    _peso = 70;
+    _altura = 170;
+    _objetivo = '';
+    _deportes = [];
+    _complementoGimnasio = '';
+    _dias = 3;
+    _minutos = 60;
+    _lesiones = 'Ninguna';
+    _tipoDieta = '';
+    _alergias = 'Ninguna';
+    _presupuesto = 80;
+    _horasSueno = 7;
+    _suplementos = [];
+    notifyListeners();
+  }
+
+  // ── Flujo principal ───────────────────────────────────────
+
+  Future<void> avanzarPaso(String valorRespuesta) async {
+    final numeroPaso = _pasoActual + 1;
+    _guardarRespuesta(numeroPaso, valorRespuesta);
+    _aplicarStats(numeroPaso, valorRespuesta);
+
+    if (_pasoActual < pasos.length - 1) {
+      _pasoActual++;
+      notifyListeners();
+    } else {
+      await _generarPerfilCompleto();
+    }
+  }
+
+  void _guardarRespuesta(int numeroPaso, String valor) {
+    switch (numeroPaso) {
+      case 1:
+        _nombre = _capitalizarNombre(valor);
+        break;
+      case 2:
+        _edad = int.tryParse(valor) ?? 25;
+        break;
+      case 3:
+        _sexo = valor;
+        break;
+      case 4:
+        _peso = double.tryParse(valor) ?? 70;
+        break;
+      case 5:
+        _altura = double.tryParse(valor) ?? 170;
+        break;
+      case 6:
+        _objetivo = _mapObjetivo(valor);
+        break;
+      case 7:
+        _deportes = valor.split(', ').where((s) => s.isNotEmpty).toList();
+        break;
+      case 8:
+        _complementoGimnasio = valor;
+        break;
+      case 9:
+        _dias = int.tryParse(valor.split(' ').first) ?? 3;
+        break;
+      case 10:
+        _minutos = _mapMinutos(valor);
+        break;
+      case 11:
+        _lesiones = valor;
+        break;
+      case 12:
+        _tipoDieta = valor;
+        break;
+      case 13:
+        _alergias = valor;
+        break;
+      case 14:
+        _presupuesto = int.tryParse(valor) ?? 80;
+        break;
+      case 15:
+        _horasSueno = int.tryParse(valor) ?? 7;
+        break;
+      case 16:
+        _suplementos =
+            valor.split(', ').where((s) => s.isNotEmpty).toList();
+        if (_suplementos.contains('Ninguno')) _suplementos = [];
+        break;
+    }
+  }
+
+  void _aplicarStats(int numeroPaso, String valor) {
+    switch (numeroPaso) {
+      case 1:
+        _statsVisibles['nombre'] = _capitalizarNombre(valor);
+        break;
+      case 2:
+        _statsVisibles['edad'] = '$valor años';
+        break;
+      case 4:
+        _statsVisibles['peso'] = '$valor kg';
+        break;
+      case 5:
+        _statsVisibles['altura'] = '$valor cm';
+        break;
+      case 6:
+        _statsVisibles['objetivo'] = valor;
+        break;
+      case 7:
+        _statsVisibles['deporte'] =
+            valor.split(', ').where((s) => s.isNotEmpty).first;
+        _actualizarLugarPorDeporte(valor);
+        _actualizarPartesIluminadas(valor);
+        break;
+      case 9:
+        _statsVisibles['dias'] = '${valor.split(' ').first}/sem';
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _actualizarLugarPorDeporte(String deporte) {
+    final d = deporte.toLowerCase();
+    final String lugar;
+    if (d.contains('natación') ||
+        d.contains('natacion') ||
+        d.contains('waterpolo') ||
+        d.contains('nadar')) {
+      lugar = 'Piscina';
+    } else if (d.contains('running') ||
+        d.contains('atletismo') ||
+        d.contains('ciclismo') ||
+        d.contains('fútbol') ||
+        d.contains('futbol') ||
+        d.contains('senderismo') ||
+        d.contains('trekking') ||
+        d.contains('rugby') ||
+        d.contains('volleyball') ||
+        d.contains('voleibol')) {
+      lugar = 'Exterior';
+    } else if (d.contains('gimnasio') ||
+        d.contains('crossfit') ||
+        d.contains('boxeo') ||
+        d.contains('artes marciales') ||
+        d.contains('judo') ||
+        d.contains('karate')) {
+      lugar = 'Gimnasio';
+    } else if (d.contains('yoga') || d.contains('pilates')) {
+      lugar = 'Casa/Gimnasio';
+    } else if (d.contains('pádel') ||
+        d.contains('padel') ||
+        d.contains('tenis') ||
+        d.contains('squash')) {
+      lugar = 'Pista';
+    } else if (d.contains('escalada') || d.contains('climbing')) {
+      lugar = 'Rocódromo';
+    } else if (d.contains('surf') ||
+        d.contains('esquí') ||
+        d.contains('esqui')) {
+      lugar = 'Exterior';
+    } else {
+      lugar = 'Exterior';
+    }
+    _statsVisibles['lugar'] = lugar;
+  }
+
+  void _actualizarPartesIluminadas(String deporte) {
+    final d = deporte.toLowerCase();
+    if (d.contains('gimnasio') ||
+        d.contains('crossfit') ||
+        d.contains('boxeo') ||
+        d.contains('musculación') ||
+        d.contains('musculacion') ||
+        d.contains('calistenia')) {
+      _partesIluminadas.addAll(['brazos', 'torso']);
+    }
+    if (d.contains('running') ||
+        d.contains('fútbol') ||
+        d.contains('futbol') ||
+        d.contains('ciclismo') ||
+        d.contains('tenis') ||
+        d.contains('pádel') ||
+        d.contains('padel') ||
+        d.contains('senderismo') ||
+        d.contains('atletismo')) {
+      _partesIluminadas.add('piernas');
+    }
+    if (d.contains('natación') ||
+        d.contains('natacion') ||
+        d.contains('surf') ||
+        d.contains('remo') ||
+        d.contains('waterpolo')) {
+      _partesIluminadas.addAll(['brazos', 'torso', 'piernas']);
+    }
+    if (d.contains('yoga') || d.contains('pilates')) {
+      _partesIluminadas.addAll(['torso', 'piernas']);
+    }
+  }
+
+  // ── Generar perfil completo ───────────────────────────────
+
+  Future<void> _generarPerfilCompleto() async {
+    final deportesFinal = List<String>.from(_deportes);
+    if (_complementoGimnasio.contains('complemento') &&
+        !deportesFinal.any((d) => d.toLowerCase().contains('gimnasio'))) {
+      deportesFinal.add('Gimnasio');
+    }
+    if (_complementoGimnasio.contains('Ya entreno') &&
+        !deportesFinal.any((d) => d.toLowerCase().contains('gimnasio'))) {
+      deportesFinal.add('Gimnasio');
+    }
+
+    final alergiasLista =
+        _alergias.startsWith('No') ? <String>[] : [_alergias];
+    final suplementosLista = List<String>.from(_suplementos);
+
+    _perfilEnConstruccion = UserProfile(
+      id: const Uuid().v4(),
+      nombre: _nombre,
+      edad: _edad,
+      sexo: _sexo,
+      peso: _peso,
+      altura: _altura,
+      objetivo: _objetivo,
+      nivelActividad: _inferirNivelActividad(_dias),
+      deportes: deportesFinal,
+      diasEntrenamiento: _dias,
+      minutosSesion: _minutos,
+      lugarEntrenamiento: _statsVisibles['lugar'] ?? '',
+      lesiones: _lesiones,
+      tipoDieta: _tipoDieta,
+      alergias: alergiasLista,
+      presupuestoSemanal: _presupuesto,
+      horasSueno: _horasSueno,
+      suplementosActuales: suplementosLista,
+      onboardingCompletado: true,
+      fechaRegistro: DateTime.now(),
     );
-    notifyListeners();
-  }
 
-  void limpiarSelectorNumerico() {
-    _tipoSelectorNumerico = null;
-    notifyListeners();
-  }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+        'user_profile', jsonEncode(_perfilEnConstruccion.toJson()));
+    await prefs.setBool('onboarding_completado', true);
 
-  Future<void> enviarMensaje(String texto) async {
-    if (texto.trim().isEmpty || _estaCargando) return;
-
-    final textoLimpio = texto.trim();
-    final mensajeIndex = _mensajes.where((m) => m.esUsuario).length;
-
-    _mensajes.add(ChatMessage.deUsuario(textoLimpio));
-    _analizarMensajeUsuario(textoLimpio, mensajeIndex);
-    notifyListeners();
-
-    final mensajeCargando = ChatMessage.cargando();
-    _mensajes.add(mensajeCargando);
-    _estaCargando = true;
-    _opcionesActuales = [];
-    _tipoSelectorNumerico = null;
+    _onboardingCompletado = true;
     notifyListeners();
 
     try {
-      final historialSinCargando =
-          _mensajes.where((m) => !m.estaCargando).toList();
-
-      final respuestaRaw = await _aiService.enviarMensaje(
-        historial: historialSinCargando.sublist(
-            0, historialSinCargando.length - 1),
-        mensajeUsuario: textoLimpio,
-        systemPrompt: systemPromptOnboarding,
-      );
-
-      final parsed = _extraerOpciones(respuestaRaw);
-      final textoMostrar = parsed.texto;
-      _opcionesActuales = parsed.opciones;
-
-      final idxCargando =
-          _mensajes.indexWhere((m) => m.id == mensajeCargando.id);
-      if (idxCargando != -1) {
-        _mensajes[idxCargando] = ChatMessage.deIA(textoMostrar);
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirestoreService()
+            .guardarPerfil(_perfilEnConstruccion, uid)
+            .timeout(const Duration(seconds: 8));
       }
-
-      if (textoMostrar.contains('PERFIL_COMPLETO:')) {
-        await _parsearPerfil(textoMostrar);
-      } else if (_opcionesActuales.isEmpty) {
-        _detectarSelectorNumerico(textoMostrar);
-      }
-    } catch (e) {
-      final idxCargando =
-          _mensajes.indexWhere((m) => m.id == mensajeCargando.id);
-      if (idxCargando != -1) {
-        _mensajes[idxCargando] = ChatMessage.deIA(
-            'Lo siento, ocurrió un error. Por favor intenta de nuevo.');
-      }
-      _opcionesActuales = [];
-      rethrow;
-    } finally {
-      _estaCargando = false;
-      notifyListeners();
-    }
+    } catch (_) {}
   }
 
-  // ── Extraer OPCIONES:[...] ───────────────────────────────────
+  // ── Helpers estáticos ─────────────────────────────────────
 
-  static ({String texto, List<String> opciones}) _extraerOpciones(
-      String respuesta) {
-    final match =
-        RegExp(r'\s*OPCIONES:\[([^\]]+)\]').firstMatch(respuesta);
-    if (match == null) return (texto: respuesta.trim(), opciones: []);
-    final raw = match.group(1)!;
-    final opciones = raw
-        .split('|')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    final texto =
-        respuesta.replaceAll(RegExp(r'\s*OPCIONES:\[[^\]]+\]'), '').trim();
-    return (texto: texto, opciones: opciones);
+  static String _capitalizarNombre(String nombre) {
+    return nombre
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+        .join(' ');
   }
 
-  // ── Detectar qué selector numérico mostrar ───────────────────
-
-  void _detectarSelectorNumerico(String mensajeIA) {
-    final m = mensajeIA.toLowerCase();
-    String? tipo;
-    if (m.contains('cuánto pesas') ||
-        m.contains('cuanto pesas') ||
-        m.contains('tu peso') ||
-        (m.contains('peso') && m.contains('kg')) ||
-        (m.contains('pesas') && !m.contains('pesas en') && !m.contains('levantas'))) {
-      tipo = 'peso';
-    } else if (m.contains('altura') ||
-        m.contains('cuánto mides') ||
-        m.contains('cuanto mides') ||
-        m.contains('estatura') ||
-        m.contains('talla')) {
-      tipo = 'altura';
-    } else if (m.contains('cuántos años') ||
-        m.contains('cuantos años') ||
-        m.contains('tu edad') ||
-        (m.contains('edad') && !m.contains('tu edad de')) ||
-        (m.contains('años') && m.contains('tienes'))) {
-      tipo = 'edad';
-    } else if (m.contains('sueño') ||
-        m.contains('duermes') ||
-        m.contains('dormir') ||
-        (m.contains('horas') &&
-            !m.contains('semana') &&
-            !m.contains('sesión') &&
-            !m.contains('sesion') &&
-            !m.contains('día') &&
-            !m.contains('dia'))) {
-      tipo = 'sueno';
-    } else if (m.contains('presupuesto') ||
-        (m.contains('euros') && m.contains('semana')) ||
-        m.contains('cuánto gastas') ||
-        m.contains('cuanto gastas') ||
-        m.contains('en alimentación') ||
-        m.contains('en alimentacion')) {
-      tipo = 'presupuesto';
-    }
-    _tipoSelectorNumerico = tipo;
+  static String _mapObjetivo(String valor) {
+    const map = {
+      'Perder grasa': 'perder_grasa',
+      'Ganar músculo': 'ganar_musculo',
+      'Recomposición': 'recomposicion',
+      'Rendimiento deportivo': 'rendimiento',
+      'Mantener peso': 'mantener',
+      'Salud general': 'salud',
+    };
+    return map[valor] ?? valor.toLowerCase().replaceAll(' ', '_');
   }
 
-  // ── Análisis inmediato del mensaje del usuario ───────────────
-
-  void _analizarMensajeUsuario(String texto, int mensajeIndex) {
-    final t = texto.toLowerCase().trim();
-    final tDot = t.replaceAll(',', '.');
-    bool changed = false;
-
-    // Contexto: última pregunta de la IA
-    final ultimaIA = _ultimaMensajeIA();
-
-    // ── Nombre ────────────────────────────────────────────────
-    if (mensajeIndex == 0 && !RegExp(r'\d').hasMatch(texto)) {
-      final palabras = texto
-          .trim()
-          .split(RegExp(r'\s+'))
-          .where((p) => p.isNotEmpty)
-          .toList();
-      if (palabras.isNotEmpty && palabras.length <= 3) {
-        final nombre = palabras
-            .map((p) =>
-                p[0].toUpperCase() + p.substring(1).toLowerCase())
-            .join(' ');
-        if (_statsVisibles['nombre'] != nombre) {
-          _statsVisibles['nombre'] = nombre;
-          changed = true;
-        }
-      }
-    }
-
-    // ── Peso ──────────────────────────────────────────────────
-    {
-      double? pesoVal;
-      // Explícito: "78 kg", "78kg", "78 kilos", "peso 78"
-      final r1 = RegExp(
-        r'(?:peso\s+)?(\d+(?:[.,]\d+)?)\s*(?:kg|kilos?)'
-        r'|(?:peso|pesa)\s+(\d+(?:[.,]\d+)?)',
-        caseSensitive: false,
-      ).firstMatch(tDot);
-      if (r1 != null) {
-        final raw = (r1.group(1) ?? r1.group(2))!;
-        final val = double.tryParse(raw);
-        if (val != null && val >= 40 && val <= 200) pesoVal = val;
-      }
-      // Contextual: número solo si la IA preguntó por peso
-      if (pesoVal == null && ultimaIA != null) {
-        if (ultimaIA.contains('peso') ||
-            ultimaIA.contains('pesas') ||
-            ultimaIA.contains('kilos') ||
-            ultimaIA.contains('kg')) {
-          final bare = RegExp(r'^\s*(\d+(?:\.\d+)?)\s*$').firstMatch(tDot);
-          if (bare != null) {
-            final val = double.tryParse(bare.group(1)!);
-            if (val != null && val >= 40 && val <= 200) pesoVal = val;
-          }
-        }
-      }
-      if (pesoVal != null) {
-        final str = '${pesoVal.toStringAsFixed(1)} kg';
-        if (_statsVisibles['peso'] != str) {
-          _statsVisibles['peso'] = str;
-          changed = true;
-        }
-      }
-    }
-
-    // ── Altura ────────────────────────────────────────────────
-    {
-      double? alturaVal;
-      // "180cm", "180 cm", "1.80cm" (cm suffix)
-      final rCm = RegExp(
-        r'(\d+(?:\.\d+)?)\s*(?:cm|centímetros?|centimetros?)',
-        caseSensitive: false,
-      ).firstMatch(tDot);
-      if (rCm != null) {
-        final val = double.tryParse(rCm.group(1)!);
-        if (val != null) {
-          if (val >= 100 && val <= 220) {
-            alturaVal = val;
-          } else if (val >= 1.0 && val <= 2.5) {
-            alturaVal = val * 100;
-          }
-        }
-      }
-      // Float metros: "1.80", "1.75" (1.50–2.10)
-      if (alturaVal == null) {
-        final rM = RegExp(r'(?<!\d)(1\.\d{2})(?!\d)').firstMatch(tDot);
-        if (rM != null) {
-          final val = double.tryParse(rM.group(1)!);
-          if (val != null && val >= 1.5 && val <= 2.1) alturaVal = val * 100;
-        }
-      }
-      // "mido 175" prefix
-      if (alturaVal == null) {
-        final rMido = RegExp(
-          r'(?:mido|talla)\s+(\d+(?:\.\d+)?)',
-          caseSensitive: false,
-        ).firstMatch(tDot);
-        if (rMido != null) {
-          final val = double.tryParse(rMido.group(1)!);
-          if (val != null && val >= 100 && val <= 220) alturaVal = val;
-        }
-      }
-      // Contextual: número solo si la IA preguntó por altura
-      if (alturaVal == null && ultimaIA != null) {
-        if (ultimaIA.contains('altura') ||
-            ultimaIA.contains('mide') ||
-            ultimaIA.contains('estatura') ||
-            ultimaIA.contains('talla')) {
-          final bare = RegExp(r'^\s*(\d+(?:\.\d+)?)\s*$').firstMatch(tDot);
-          if (bare != null) {
-            final val = double.tryParse(bare.group(1)!);
-            if (val != null) {
-              if (val >= 100 && val <= 220) {
-                alturaVal = val;
-              } else if (val >= 1.5 && val <= 2.1) {
-                alturaVal = val * 100;
-              }
-            }
-          }
-        }
-      }
-      if (alturaVal != null) {
-        final str = '${alturaVal.round()} cm';
-        if (_statsVisibles['altura'] != str) {
-          _statsVisibles['altura'] = str;
-          changed = true;
-        }
-      }
-    }
-
-    // ── Edad ──────────────────────────────────────────────────
-    {
-      int? edadVal;
-      // Explícita: "25 años", "tengo 25", "25años"
-      final rAnios = RegExp(
-        r'(\d+)\s*años|\btengo\s+(\d+)',
-        caseSensitive: false,
-      ).firstMatch(t);
-      if (rAnios != null) {
-        final raw = rAnios.group(1) ?? rAnios.group(2);
-        final val = int.tryParse(raw!);
-        if (val != null && val >= 10 && val <= 100) edadVal = val;
-      }
-      // Contextual: número solo si la IA preguntó por edad
-      if (edadVal == null && ultimaIA != null) {
-        if (ultimaIA.contains('edad') ||
-            ultimaIA.contains('años') ||
-            ultimaIA.contains('cuántos')) {
-          final bare = RegExp(r'^\s*(\d+)\s*$').firstMatch(t);
-          if (bare != null) {
-            final val = int.tryParse(bare.group(1)!);
-            if (val != null && val >= 10 && val <= 100) edadVal = val;
-          }
-        }
-      }
-      if (edadVal != null) {
-        final str = '$edadVal años';
-        if (_statsVisibles['edad'] != str) {
-          _statsVisibles['edad'] = str;
-          changed = true;
-        }
-      }
-    }
-
-    // ── Días ──────────────────────────────────────────────────
-    final diasMatch = RegExp(r'(\d)\s*día', caseSensitive: false).firstMatch(t);
-    if (diasMatch != null) {
-      final val = int.tryParse(diasMatch.group(1)!);
-      if (val != null && val >= 1 && val <= 7) {
-        final str = '$val días/sem';
-        if (_statsVisibles['dias'] != str) {
-          _statsVisibles['dias'] = str;
-          changed = true;
-        }
-      }
-    }
-
-    // ── Objetivo ──────────────────────────────────────────────
-    final objetivo = _detectarObjetivo(t);
-    if (objetivo != null && _statsVisibles['objetivo'] != objetivo) {
-      _statsVisibles['objetivo'] = objetivo;
-      changed = true;
-    }
-
-    // ── Deporte ───────────────────────────────────────────────
-    final deporte = _detectarDeporte(t);
-    if (deporte != null && _statsVisibles['deporte'] != deporte) {
-      _statsVisibles['deporte'] = deporte;
-      changed = true;
-    }
-
-    // ── Partes iluminadas ─────────────────────────────────────
-    final nuevasPartes = _detectarPartesIluminadas(t);
-    if (nuevasPartes.isNotEmpty) {
-      final antes = _partesIluminadas.length;
-      _partesIluminadas.addAll(nuevasPartes);
-      if (_partesIluminadas.length != antes) changed = true;
-    }
-
-    if (changed) notifyListeners();
+  static String _inferirNivelActividad(int dias) {
+    if (dias <= 2) return 'sedentario';
+    if (dias <= 3) return 'ligero';
+    if (dias <= 4) return 'moderado';
+    if (dias <= 5) return 'activo';
+    return 'muy_activo';
   }
 
-  // ── Contexto: último mensaje de la IA ────────────────────────
-
-  String? _ultimaMensajeIA() {
-    for (int i = _mensajes.length - 1; i >= 0; i--) {
-      if (!_mensajes[i].esUsuario && !_mensajes[i].estaCargando) {
-        return _mensajes[i].contenido.toLowerCase();
-      }
-    }
-    return null;
-  }
-
-  // ── Detectores estáticos ──────────────────────────────────────
-
-  static String? _detectarObjetivo(String t) {
-    if (t.contains('perder') ||
-        t.contains('adelgazar') ||
-        t.contains('bajar') ||
-        t.contains('grasa') ||
-        t.contains('quemar')) {
-      return 'Perder grasa';
-    }
-    if (t.contains('ganar') ||
-        t.contains('volumen') ||
-        t.contains('músculo') ||
-        t.contains('musculo') ||
-        t.contains('masa')) {
-      return 'Ganar músculo';
-    }
-    if (t.contains('recomposición') || t.contains('recomposicion')) {
-      return 'Recomposición';
-    }
-    if (t.contains('rendimiento') ||
-        t.contains('competir') ||
-        t.contains('resistencia')) {
-      return 'Rendimiento';
-    }
-    if (t.contains('mantener') ||
-        t.contains('definir') ||
-        t.contains('tonificar')) {
-      return 'Mantener';
-    }
-    if (t.contains('salud') ||
-        t.contains('bienestar') ||
-        t.contains('saludable')) {
-      return 'Salud general';
-    }
-    return null;
-  }
-
-  static String? _detectarDeporte(String t) {
-    const tabla = [
-      (['gym', 'gimnasio', 'pesas', 'musculación', 'musculacion'], 'Gimnasio'),
-      (['running', 'correr', 'carrera', 'atletismo'], 'Running'),
-      (['fútbol', 'futbol'], 'Fútbol'),
-      (['natación', 'natacion', 'nadar'], 'Natación'),
-      (['ciclismo', 'bicicleta', 'bike'], 'Ciclismo'),
-      (['yoga'], 'Yoga'),
-      (['pilates'], 'Pilates'),
-      (['pádel', 'padel'], 'Pádel'),
-      (['tenis'], 'Tenis'),
-      (['basket', 'baloncesto'], 'Baloncesto'),
-      (['boxeo'], 'Boxeo'),
-      (['crossfit'], 'CrossFit'),
-      (['calistenia', 'calisthenics'], 'Calistenia'),
-      (['senderismo', 'hiking', 'trekking'], 'Senderismo'),
-      (['baile', 'danza'], 'Danza'),
-      (['surf'], 'Surf'),
-      (['escalada', 'climbing'], 'Escalada'),
-      (['voleibol', 'volleyball'], 'Voleibol'),
-      (['artes marciales', 'judo', 'karate', 'bjj'], 'Artes marciales'),
-      (['esquí', 'esqui'], 'Esquí'),
-      (['remo', 'kayak'], 'Remo/Kayak'),
-    ];
-    for (final (keywords, nombre) in tabla) {
-      for (final kw in keywords) {
-        if (t.contains(kw)) return nombre;
-      }
-    }
-    return null;
-  }
-
-  static Set<String> _detectarPartesIluminadas(String t) {
-    final partes = <String>{};
-    const brazosYTorso = [
-      'gym', 'gimnasio', 'pesas', 'musculacion', 'musculación',
-      'crossfit', 'calistenia', 'boxeo', 'artes marciales',
-      'judo', 'karate', 'bjj', 'muscu',
-    ];
-    for (final kw in brazosYTorso) {
-      if (t.contains(kw)) {
-        partes.addAll(['brazos', 'torso']);
-        break;
-      }
-    }
-    const torsoYPiernas = ['yoga', 'pilates', 'estiramientos', 'danza', 'baile'];
-    for (final kw in torsoYPiernas) {
-      if (t.contains(kw)) {
-        partes.addAll(['torso', 'piernas']);
-        break;
-      }
-    }
-    const piernas = [
-      'running', 'correr', 'atletismo', 'fútbol', 'futbol',
-      'basket', 'baloncesto', 'tenis', 'pádel', 'padel',
-      'ciclismo', 'bicicleta', 'hiking', 'senderismo',
-      'esqui', 'esquí', 'skate', 'voleibol', 'cardio',
-    ];
-    for (final kw in piernas) {
-      if (t.contains(kw)) {
-        partes.add('piernas');
-        break;
-      }
-    }
-    const completo = [
-      'natación', 'natacion', 'nadar', 'surf', 'remo', 'kayak',
-      'todo', 'completo', 'fullbody', 'full body', 'funcional',
-    ];
-    for (final kw in completo) {
-      if (t.contains(kw)) {
-        partes.addAll(['brazos', 'torso', 'piernas']);
-        break;
-      }
-    }
-    return partes;
-  }
-
-  // ── Parsear perfil completo ──────────────────────────────────
-
-  Future<void> _parsearPerfil(String respuesta) async {
-    try {
-      final idx = respuesta.indexOf('PERFIL_COMPLETO:');
-      final jsonStr =
-          respuesta.substring(idx + 'PERFIL_COMPLETO:'.length).trim();
-      final jsonData = jsonDecode(jsonStr) as Map<String, dynamic>;
-      _perfilEnConstruccion = UserProfile.fromJson(jsonData).copyWith(
-        id: const Uuid().v4(),
-        onboardingCompletado: true,
-        fechaRegistro: DateTime.now(),
-      );
-
-      // 1. Guardar local (fuente de verdad, nunca falla)
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-          'user_profile', jsonEncode(_perfilEnConstruccion.toJson()));
-      await prefs.setBool('onboarding_completado', true);
-
-      // 2. Navegar inmediatamente
-      _onboardingCompletado = true;
-      notifyListeners();
-
-      // 3. Sincronizar con Firestore en background (no crítico)
-      try {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid != null) {
-          await FirestoreService()
-              .guardarPerfil(_perfilEnConstruccion, uid)
-              .timeout(const Duration(seconds: 8));
-        }
-      } catch (_) {
-        // Firestore error no crítico: el perfil ya está guardado localmente
-      }
-    } catch (_) {
-      // JSON inválido — continuamos la conversación
-    }
+  static int _mapMinutos(String valor) {
+    if (valor.contains('30')) return 30;
+    if (valor.contains('45')) return 45;
+    if (valor.contains('60')) return 60;
+    if (valor.contains('90') && !valor.contains('Más')) return 90;
+    return 120;
   }
 }
