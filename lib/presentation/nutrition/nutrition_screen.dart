@@ -266,10 +266,13 @@ class NutritionScreen extends StatelessWidget {
   Widget _buildMealList(HomeProvider provider) {
     final comidas = provider.comidasHoy;
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, i) {
+            if (i == comidas.length) {
+              return _buildTotalesCard(provider);
+            }
             final meal = comidas[i];
             return _MealCard(
               meal: meal,
@@ -277,8 +280,91 @@ class NutritionScreen extends StatelessWidget {
                   context.read<HomeProvider>().toggleComidaCompletada(meal),
             );
           },
-          childCount: comidas.length,
+          childCount: comidas.length + 1,
         ),
+      ),
+    );
+  }
+
+  Widget _buildTotalesCard(HomeProvider provider) {
+    final plan = provider.planNutricion!;
+    final completadas = plan.comidas.where((m) => m.completada).toList();
+    final protTotal = completadas.fold(0.0, (s, m) => s + m.proteinas);
+    final carbTotal = completadas.fold(0.0, (s, m) => s + m.carbohidratos);
+    final grasTotal = completadas.fold(0.0, (s, m) => s + m.grasas);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'TOTALES DEL DÍA',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _totalMacro('Proteínas', '${protTotal.round()}g',
+                  plan.proteinasObjetivo, const Color(0xFF4FC3F7)),
+              const SizedBox(width: 10),
+              _totalMacro('Carbos', '${carbTotal.round()}g',
+                  plan.carbosObjetivo, const Color(0xFFFFB74D)),
+              const SizedBox(width: 10),
+              _totalMacro('Grasas', '${grasTotal.round()}g',
+                  plan.grasasObjetivo, const Color(0xFFEF9A9A)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _totalMacro(
+      String label, String valor, double objetivo, Color color) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            valor,
+            style: TextStyle(
+                color: color,
+                fontSize: 15,
+                fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 3),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: objetivo > 0
+                  ? (double.tryParse(valor.replaceAll('g', '')) ?? 0) /
+                      objetivo
+                  : 0.0,
+              backgroundColor: AppColors.backgroundElevated,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 3,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(label,
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 10)),
+          Text('de ${objetivo.round()}g',
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 10)),
+        ],
       ),
     );
   }

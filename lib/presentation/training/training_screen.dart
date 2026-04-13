@@ -9,6 +9,22 @@ import 'package:fitcoach/data/models/workout_plan.dart';
 class TrainingScreen extends StatelessWidget {
   const TrainingScreen({super.key});
 
+  // Colores por tipo
+  static const Color _colorDeporte = Color(0xFF378ADD);
+  static const Color _colorGimnasio = AppColors.primary;
+  static const Color _colorDescanso = AppColors.border;
+
+  static Color _colorForTipo(String tipo) {
+    switch (tipo) {
+      case 'deporte':
+        return _colorDeporte;
+      case 'gimnasio':
+        return _colorGimnasio;
+      default:
+        return _colorDescanso;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<HomeProvider>(
@@ -99,44 +115,58 @@ class TrainingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Silueta deportiva
               Container(
-                width: 80,
-                height: 80,
+                width: 96,
+                height: 96,
                 decoration: BoxDecoration(
                   color: AppColors.backgroundCard,
-                  borderRadius: BorderRadius.circular(20),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: const Icon(
-                  Icons.fitness_center,
+                  Icons.directions_run,
                   color: AppColors.textSecondary,
-                  size: 36,
+                  size: 44,
                 ),
               ),
               const SizedBox(height: 20),
               const Text(
-                'Sin plan de entrenamiento',
+                'Tu plan está siendo preparado',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               const Text(
-                'Genera tu plan semanal personalizado con IA',
+                'Genera tu primer plan de entrenamiento\npersonalizado con IA',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),
               if (provider.cargandoPlan)
-                const CircularProgressIndicator(color: AppColors.primary)
+                const Column(
+                  children: [
+                    CircularProgressIndicator(color: AppColors.primary),
+                    SizedBox(height: 12),
+                    Text(
+                      'Generando plan con IA...',
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                  ],
+                )
               else
                 ElevatedButton(
                   onPressed: () => provider.generarPlanEntrenamiento(),
-                  child: const Text('Generar plan con IA'),
+                  child: const Text('Generar mi plan'),
                 ),
             ],
           ),
@@ -148,58 +178,136 @@ class TrainingScreen extends StatelessWidget {
   Widget _buildPlanList(BuildContext context, HomeProvider provider) {
     final plan = provider.planEntrenamiento!;
     final hoyIdx = DateTime.now().weekday - 1;
-    const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const diasNombre = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, i) {
+            // Nota de distribución
             if (i == plan.semana.length) {
+              return _buildNotaDistribucion(plan.notaDistribucion);
+            }
+            // Botón regenerar
+            if (i == plan.semana.length + 1) {
               return Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 20),
-                child: Text(
-                  plan.notaDistribucion,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    height: 1.5,
+                padding: const EdgeInsets.only(bottom: 24),
+                child: OutlinedButton(
+                  onPressed: provider.cargandoPlan
+                      ? null
+                      : () => provider.generarPlanEntrenamiento(),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.border),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: const Text(
+                    'Generar nuevo plan',
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
               );
             }
+
             final day = plan.semana[i];
             final esHoy = i == hoyIdx;
             return _WorkoutDayCard(
-              dia: dias[i],
+              diaNombre: diasNombre[i],
               workout: day,
               esHoy: esHoy,
+              accentColor: _colorForTipo(day.tipo),
               onTap: day.esDescanso
                   ? null
                   : () => context.push(
                         AppConstants.routeSessionDetail,
                         extra: day,
                       ),
+              onToggle: () =>
+                  context.read<HomeProvider>().toggleEntrenamientoCompletado(),
             );
           },
-          childCount: plan.semana.length + 1,
+          childCount: plan.semana.length + 2,
         ),
+      ),
+    );
+  }
+
+  Widget _buildNotaDistribucion(String nota) {
+    if (nota.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(top: 4, bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 3,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'POR QUÉ ESTA DISTRIBUCIÓN',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  nota,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _WorkoutDayCard extends StatelessWidget {
-  final String dia;
+  final String diaNombre;
   final WorkoutDay workout;
   final bool esHoy;
+  final Color accentColor;
   final VoidCallback? onTap;
+  final VoidCallback onToggle;
 
   const _WorkoutDayCard({
-    required this.dia,
+    required this.diaNombre,
     required this.workout,
     required this.esHoy,
+    required this.accentColor,
     this.onTap,
+    required this.onToggle,
   });
 
   @override
@@ -208,111 +316,170 @@ class _WorkoutDayCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: esHoy
-              ? AppColors.primary.withAlpha(20)
+              ? AppColors.primary.withAlpha(13)
               : AppColors.backgroundCard,
           borderRadius: BorderRadius.circular(14),
-          border: esHoy
-              ? Border.all(color: AppColors.primary.withAlpha(77))
-              : null,
+          border: Border.all(
+            color: esHoy
+                ? AppColors.primary.withAlpha(60)
+                : AppColors.border,
+            width: 0.5,
+          ),
         ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 36,
-              child: Column(
-                children: [
-                  Text(
-                    dia,
-                    style: TextStyle(
-                      color: esHoy
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Borde lateral de color
+              Container(
+                width: 4,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(14),
+                    bottomLeft: Radius.circular(14),
                   ),
-                  if (esHoy)
-                    Container(
-                      margin: const EdgeInsets.only(top: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  diaNombre,
+                                  style: TextStyle(
+                                    color: esHoy
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: accentColor.withAlpha(30),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    _labelTipo(workout.tipo),
+                                    style: TextStyle(
+                                      color: accentColor,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Checkbox
+                          GestureDetector(
+                            onTap: workout.esDescanso ? null : onToggle,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: workout.completado
+                                    ? AppColors.primary
+                                    : AppColors.backgroundElevated,
+                                shape: BoxShape.circle,
+                                border: workout.completado
+                                    ? null
+                                    : Border.all(
+                                        color: AppColors.border),
+                              ),
+                              child: workout.completado
+                                  ? const Icon(Icons.check,
+                                      color: AppColors.background,
+                                      size: 13)
+                                  : null,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 14),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: workout.esDescanso
-                    ? AppColors.backgroundElevated
-                    : AppColors.primary.withAlpha(26),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                workout.esDescanso
-                    ? Icons.self_improvement
-                    : _iconForTipo(workout.tipo),
-                color: workout.esDescanso
-                    ? AppColors.textSecondary
-                    : AppColors.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    workout.titulo,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                      const SizedBox(height: 6),
+                      Text(
+                        workout.titulo,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (!workout.esDescanso) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '${workout.duracion} min · ${workout.lugar}',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (workout.caracteristicas.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 5,
+                            runSpacing: 5,
+                            children: workout.caracteristicas.map((c) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundElevated,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  c,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ],
+                    ],
                   ),
-                  if (!workout.esDescanso) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '${workout.duracion} min · ${workout.lugar}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
-            if (workout.completado)
-              const Icon(Icons.check_circle,
-                  color: AppColors.primary, size: 20)
-            else if (!workout.esDescanso)
-              const Icon(Icons.chevron_right,
-                  color: AppColors.textSecondary, size: 20),
-          ],
+              if (!workout.esDescanso)
+                const Padding(
+                  padding: EdgeInsets.only(right: 10),
+                  child: Center(
+                    child: Icon(Icons.chevron_right,
+                        color: AppColors.textSecondary, size: 18),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  IconData _iconForTipo(String tipo) {
+  String _labelTipo(String tipo) {
     switch (tipo) {
       case 'gimnasio':
-        return Icons.fitness_center;
+        return 'GIMNASIO';
       case 'deporte':
-        return Icons.directions_run;
+        return 'DEPORTE';
       default:
-        return Icons.self_improvement;
+        return 'DESCANSO';
     }
   }
 }

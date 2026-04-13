@@ -22,9 +22,18 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _mensajes.add(ChatMessage.deIA(
-      '¡Hola! Soy tu asistente de fitness personal. Puedo ayudarte con dudas sobre tu entrenamiento, nutrición, técnica de ejercicios o cualquier cosa relacionada con tu progreso. ¿En qué puedo ayudarte hoy?',
-    ));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<HomeProvider>();
+      final nombre = provider.perfil?.nombre ?? '';
+      final saludo = nombre.isNotEmpty
+          ? 'Hola $nombre, soy tu entrenador personal.'
+          : 'Hola, soy tu entrenador personal.';
+      setState(() {
+        _mensajes.add(ChatMessage.deIA(
+          '$saludo Puedes preguntarme sobre tu plan, suplementación, nutrición o cualquier duda sobre tu entrenamiento.',
+        ));
+      });
+    });
   }
 
   @override
@@ -100,18 +109,27 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(26),
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.background,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 1.5),
               ),
-              child: const Icon(Icons.smart_toy_outlined,
-                  color: AppColors.primary, size: 18),
+              child: const Center(
+                child: Text(
+                  'FC',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: 10),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'FitCoach AI',
+                  'Entrenador FitCoach',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 16,

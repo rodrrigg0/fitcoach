@@ -52,6 +52,32 @@ class HomeProvider extends ChangeNotifier {
 
   List<Meal> get comidasHoy => _planNutricion?.comidas ?? [];
 
+  int get caloriasConsumidas =>
+      _planNutricion?.caloriasConsumidas ?? 0;
+
+  double get porcentajeCalorias {
+    final obj = caloriasObjetivo;
+    if (obj == 0) return 0;
+    return (caloriasConsumidas / obj).clamp(0.0, 1.0);
+  }
+
+  Meal? get proximaComida {
+    final comidas = comidasHoy.where((m) => !m.completada).toList();
+    if (comidas.isEmpty) return null;
+    final ahora = DateTime.now();
+    for (final m in comidas) {
+      final partes = m.hora.split(':');
+      if (partes.length == 2) {
+        final h = int.tryParse(partes[0]) ?? 0;
+        final min = int.tryParse(partes[1]) ?? 0;
+        if (h > ahora.hour || (h == ahora.hour && min >= ahora.minute)) {
+          return m;
+        }
+      }
+    }
+    return comidas.first;
+  }
+
   int get caloriasObjetivo {
     if (_perfil == null) return 2000;
     // Harris-Benedict BMR
@@ -279,39 +305,41 @@ class HomeProvider extends ChangeNotifier {
 
   String _buildWorkoutPrompt() {
     final p = _perfil!;
-    return '''Genera un plan de entrenamiento semanal personalizado en JSON con esta estructura exacta:
-{
-  "semana": [
-    {
-      "tipo": "gimnasio|deporte|descanso",
-      "titulo": "Nombre del entrenamiento",
-      "descripcion": "Descripción breve",
-      "duracion": 45,
-      "lugar": "Gimnasio|Parque|Casa",
-      "ejercicios": [
-        {"nombre": "Sentadillas", "series": "4x12", "duracion": null, "distancia": null}
-      ],
-      "porQueHoy": "Razón de este entrenamiento hoy",
-      "objetivos": ["Fuerza", "Resistencia"],
-      "consejo": "Consejo del día",
-      "caracteristicas": ["Piernas", "Glúteos"],
-      "completado": false
-    }
-  ],
-  "notaDistribucion": "Explicación de la distribución semanal"
-}
-
-Perfil del usuario:
+    return '''Genera un plan de entrenamiento semanal en JSON para este perfil:
 - Nombre: ${p.nombre}, ${p.edad} años, ${p.sexo}
 - Peso: ${p.peso} kg, Altura: ${p.altura} cm
 - Objetivo: ${p.objetivo}
 - Deportes: ${p.deportes.join(', ')}
 - Días de entrenamiento: ${p.diasEntrenamiento} días/semana
 - Duración sesión: ${p.minutosSesion} minutos
-- Lugar: ${p.lugarEntrenamiento}
+- Lugar habitual: ${p.lugarEntrenamiento}
 - Lesiones: ${p.lesiones.isEmpty ? 'Ninguna' : p.lesiones}
+- Dieta: ${p.tipoDieta}
+- Suplementos: ${p.suplementosActuales.isEmpty ? 'Ninguno' : p.suplementosActuales.join(', ')}
 
-Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Incluye días de descanso según la distribución óptima.''';
+El plan debe tener exactamente ${p.diasEntrenamiento} días de entrenamiento y ${7 - p.diasEntrenamiento} días de descanso distribuidos inteligentemente.
+
+Si el usuario hace deporte + gimnasio como complemento, alterna los días de forma que el gimnasio no interfiera con el deporte principal. El gimnasio debe enfocarse en los músculos complementarios al deporte.
+
+Para cada día de entrenamiento incluye:
+- tipo: "deporte" o "gimnasio" o "descanso"
+- titulo: nombre de la sesión
+- descripcion: 1 frase de qué se trabaja
+- duracion: minutos
+- lugar: donde se hace
+- ejercicios: lista con nombre, series/reps o distancia/tiempo según el deporte
+- porQueHoy: párrafo explicando por qué este entrenamiento este día concreto
+- objetivos: lista de 3 puntos de enfoque
+- consejo: tip específico para esa sesión
+- caracteristicas: lista de 3-4 pills descriptivos
+
+Para la distribución semanal incluye:
+- notaDistribucion: párrafo explicando la lógica de distribución de los días
+
+Estructura exacta:
+{"semana":[{"tipo":"deporte|gimnasio|descanso","titulo":"...","descripcion":"...","duracion":45,"lugar":"...","ejercicios":[{"nombre":"...","series":"4x12","duracion":null,"distancia":null}],"porQueHoy":"...","objetivos":["..."],"consejo":"...","caracteristicas":["..."],"completado":false}],"notaDistribucion":"..."}
+
+Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Responde SOLO con JSON válido, sin texto extra.''';
   }
 
   String _buildNutritionPrompt() {

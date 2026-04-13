@@ -4,7 +4,6 @@ import 'package:fitcoach/presentation/home/home_screen.dart';
 import 'package:fitcoach/presentation/training/training_screen.dart';
 import 'package:fitcoach/presentation/nutrition/nutrition_screen.dart';
 import 'package:fitcoach/presentation/chat/chat_screen.dart';
-import 'package:fitcoach/presentation/profile/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -31,7 +30,6 @@ class _MainScreenState extends State<MainScreen> {
           const TrainingScreen(),
           const NutritionScreen(),
           const ChatScreen(),
-          const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: Container(
@@ -46,7 +44,7 @@ class _MainScreenState extends State<MainScreen> {
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.background,
           selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
+          unselectedItemColor: const Color(0xFF444444),
           selectedFontSize: 11,
           unselectedFontSize: 11,
           elevation: 0,
@@ -70,11 +68,6 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icon(Icons.chat_bubble_outline),
               activeIcon: Icon(Icons.chat_bubble),
               label: 'Chat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Perfil',
             ),
           ],
         ),
