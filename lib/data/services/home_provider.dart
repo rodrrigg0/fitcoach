@@ -353,6 +353,20 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Sincroniza el plan de nutrición cuando ChatProvider lo modifica
+  void sincronizarNutricion(MealPlan? plan) {
+    if (plan == null) return;
+    _planNutricion = plan;
+    notifyListeners();
+  }
+
+  // Sincroniza el plan de entrenamiento cuando ChatProvider lo modifica
+  void sincronizarEntrenamiento(WorkoutPlan? plan) {
+    if (plan == null) return;
+    _planEntrenamiento = plan;
+    notifyListeners();
+  }
+
   Future<void> registrarSueno(int horas) async {
     _horasSueno = horas;
     _suenoRegistradoHoy = true;

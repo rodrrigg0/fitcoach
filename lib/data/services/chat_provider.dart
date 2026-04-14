@@ -43,6 +43,10 @@ class ChatProvider extends ChangeNotifier {
   bool get planActualizado => _planActualizado;
   bool get tieneHistorial => _mensajes.isNotEmpty;
 
+  // Callbacks para notificar a otros providers cuando se actualiza un plan
+  VoidCallback? onPlanEntrenamientoActualizado;
+  VoidCallback? onPlanNutricionActualizado;
+
   void resetPlanActualizado() {
     _planActualizado = false;
   }
@@ -150,6 +154,10 @@ class ChatProvider extends ChangeNotifier {
           'Calorías: ${_planNutricion!.caloriasObjetivo} kcal/día');
       sb.writeln(
           'Proteínas: ${_planNutricion!.proteinasObjetivo}g | Carbos: ${_planNutricion!.carbosObjetivo}g | Grasas: ${_planNutricion!.grasasObjetivo}g');
+      for (final comida in _planNutricion!.comidas) {
+        sb.writeln(
+            '  [${comida.tipo}] ${comida.nombre} - ${comida.calorias} kcal (${comida.hora})');
+      }
       sb.writeln();
     }
 
@@ -159,10 +167,20 @@ Cuando el atleta pida modificar su plan, aplica el cambio y añade al FINAL de t
 Para cambiar entrenamiento:
 MODIFICAR_ENTRENAMIENTO:{"diaSemana":"Lunes","campo":"titulo","valor":"Nuevo título"}
 
-Para cambiar campo de nutrición:
-MODIFICAR_NUTRICION:{"comida":"Almuerzo","campo":"nombre","valor":"Nuevo nombre"}
+IMPORTANTE para modificar comidas del plan nutricional:
+Usa SIEMPRE el campo "comida" con el TIPO exacto de la comida: "desayuno", "almuerzo", "cena" o "snack".
+NO uses el nombre del plato. NO uses mayúsculas. NO uses inglés.
 
-Para cambiar macros:
+Ejemplos CORRECTOS:
+MODIFICAR_NUTRICION:{"comida":"cena","campo":"nombre","valor":"Salmón al horno con verduras"}
+MODIFICAR_NUTRICION:{"comida":"desayuno","campo":"calorias","valor":"450"}
+MODIFICAR_NUTRICION:{"comida":"almuerzo","campo":"ingredientes","valor":"pollo, arroz, brócoli"}
+
+Ejemplos INCORRECTOS (nunca hacer esto):
+MODIFICAR_NUTRICION:{"comida":"Ensalada César","campo":"nombre","valor":"..."}
+MODIFICAR_NUTRICION:{"comida":"Breakfast","campo":"nombre","valor":"..."}
+
+Para cambiar macros globales:
 MODIFICAR_MACROS:{"calorias":2200,"proteinas":160,"carbos":240,"grasas":70}
 
 Puedes incluir múltiples etiquetas. Explica el cambio antes de la etiqueta.
@@ -318,51 +336,129 @@ ESTILO:
         debugPrint('Error guardando plan entreno: $e');
       }
     }
+    onPlanEntrenamientoActualizado?.call();
     notifyListeners();
   }
 
   Future<void> _aplicarCambioNutricion(
       Map<String, dynamic> cambio) async {
     if (_planNutricion == null) return;
-    final comidaId = cambio['comida'] as String?;
-    final campo = cambio['campo'] as String?;
+
+    debugPrint('=== APLICANDO CAMBIO NUTRICIÓN ===');
+    debugPrint('Cambio recibido: $cambio');
+
+    final String? nombreBuscado =
+        cambio['comida']?.toString().toLowerCase().trim();
+    final String? campo = cambio['campo']?.toString();
     final valor = cambio['valor'];
-    if (comidaId == null || campo == null || valor == null) return;
 
-    final idx = _planNutricion!.comidas.indexWhere((m) =>
-        m.tipo.toLowerCase() == comidaId.toLowerCase() ||
-        m.nombre.toLowerCase().contains(comidaId.toLowerCase()));
-    if (idx == -1) return;
+    if (nombreBuscado == null || campo == null) {
+      debugPrint('Cambio inválido: faltan campos');
+      return;
+    }
 
-    final m = _planNutricion!.comidas[idx];
-    _planNutricion!.comidas[idx] = Meal(
-      tipo: m.tipo,
-      nombre: campo == 'nombre' ? valor.toString() : m.nombre,
-      calorias: campo == 'calorias'
-          ? (int.tryParse(valor.toString()) ?? m.calorias)
-          : m.calorias,
-      proteinas: m.proteinas,
-      carbohidratos: m.carbohidratos,
-      grasas: m.grasas,
-      hora: campo == 'hora' ? valor.toString() : m.hora,
-      ingredientes: m.ingredientes,
-      preparacion:
-          campo == 'preparacion' ? valor.toString() : m.preparacion,
-      completada: m.completada,
-    );
+    bool cambioAplicado = false;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        _keyMealPlan, jsonEncode(_planNutricion!.toJson()));
+    const alias = <String, List<String>>{
+      'desayuno': ['breakfast', 'desayuno'],
+      'almuerzo': ['lunch', 'almuerzo', 'comida'],
+      'cena': ['dinner', 'cena'],
+      'snack': ['snack', 'merienda', 'tentempié'],
+    };
+
+    final nuevasComidas = _planNutricion!.comidas.map((comida) {
+      final tipoMatch =
+          comida.tipo.toLowerCase().trim() == nombreBuscado;
+      final nombreMatch =
+          comida.nombre.toLowerCase().trim().contains(nombreBuscado);
+
+      bool aliasMatch = false;
+      for (final entry in alias.entries) {
+        if (entry.value.contains(nombreBuscado) &&
+            entry.value.contains(comida.tipo.toLowerCase())) {
+          aliasMatch = true;
+          break;
+        }
+      }
+
+      if (!tipoMatch && !nombreMatch && !aliasMatch) {
+        return comida;
+      }
+
+      debugPrint('Comida encontrada: ${comida.nombre} (${comida.tipo})');
+      cambioAplicado = true;
+
+      switch (campo) {
+        case 'nombre':
+          return comida.copyWith(nombre: valor.toString());
+        case 'calorias':
+          return comida.copyWith(
+              calorias:
+                  int.tryParse(valor.toString()) ?? comida.calorias);
+        case 'proteinas':
+          return comida.copyWith(
+              proteinas:
+                  double.tryParse(valor.toString()) ?? comida.proteinas);
+        case 'carbohidratos':
+        case 'carbos':
+          return comida.copyWith(
+              carbohidratos: double.tryParse(valor.toString()) ??
+                  comida.carbohidratos);
+        case 'grasas':
+          return comida.copyWith(
+              grasas:
+                  double.tryParse(valor.toString()) ?? comida.grasas);
+        case 'ingredientes':
+          return comida.copyWith(
+              ingredientes: valor is List
+                  ? List<String>.from(valor)
+                  : valor
+                      .toString()
+                      .split(',')
+                      .map((s) => s.trim())
+                      .toList());
+        case 'preparacion':
+          return comida.copyWith(preparacion: valor.toString());
+        default:
+          debugPrint('Campo no reconocido: $campo');
+          return comida;
+      }
+    }).toList();
+
+    if (!cambioAplicado) {
+      debugPrint(
+          'ADVERTENCIA: No se encontró la comida "$nombreBuscado"');
+      debugPrint('Comidas disponibles:');
+      for (final comida in _planNutricion!.comidas) {
+        debugPrint(
+            '  - tipo: ${comida.tipo}, nombre: ${comida.nombre}');
+      }
+      return;
+    }
+
+    _planNutricion = _planNutricion!.copyWith(comidas: nuevasComidas);
+    debugPrint('Plan actualizado correctamente');
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       try {
         await _firestore.guardarPlanNutricion(_planNutricion!, uid);
+        debugPrint('Guardado en Firestore OK');
       } catch (e) {
-        debugPrint('Error guardando plan nutricion: $e');
+        debugPrint('Error Firestore: $e');
       }
     }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _keyMealPlan, jsonEncode(_planNutricion!.toJson()));
+      debugPrint('Guardado en SharedPrefs OK');
+    } catch (e) {
+      debugPrint('Error SharedPrefs: $e');
+    }
+
+    onPlanNutricionActualizado?.call();
     notifyListeners();
   }
 
@@ -390,6 +486,7 @@ ESTILO:
         debugPrint('Error guardando macros: $e');
       }
     }
+    onPlanNutricionActualizado?.call();
     notifyListeners();
   }
 

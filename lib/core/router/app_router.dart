@@ -46,13 +46,23 @@ class AppRouter {
       ),
       GoRoute(
         path: AppConstants.routeSessionDetail,
-        builder: (context, state) => SessionDetailScreen(
-          workout: state.extra as WorkoutDay,
-        ),
+        builder: (context, state) {
+          final args = state.extra as Map<String, dynamic>;
+          return SessionDetailScreen(
+            workout: args['workout'] as WorkoutDay,
+            diaNombre: args['diaNombre'] as String,
+          );
+        },
       ),
       GoRoute(
         path: AppConstants.routeActiveSession,
-        builder: (context, state) => const ActiveSessionScreen(),
+        builder: (context, state) {
+          final args = state.extra as Map<String, dynamic>;
+          return ActiveSessionScreen(
+            workout: args['workout'] as WorkoutDay,
+            diaNombre: args['diaNombre'] as String,
+          );
+        },
       ),
       GoRoute(
         path: AppConstants.routeProfile,

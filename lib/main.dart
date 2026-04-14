@@ -12,6 +12,7 @@ import 'package:fitcoach/presentation/auth/auth_provider.dart';
 import 'package:fitcoach/data/services/onboarding_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/data/services/chat_provider.dart';
+import 'package:fitcoach/data/services/training_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,8 +40,22 @@ class FitCoachApp extends StatelessWidget {
         Provider(create: (_) => FirestoreService()),
         ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
-        ChangeNotifierProvider(create: (_) => HomeProvider()..cargarDatos()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(
+          create: (_) => TrainingProvider()..cargarHistorial(),
+        ),
+        ChangeNotifierProxyProvider<ChatProvider, HomeProvider>(
+          create: (_) => HomeProvider()..cargarDatos(),
+          update: (_, chat, home) {
+            chat.onPlanNutricionActualizado = () {
+              home?.sincronizarNutricion(chat.planNutricion);
+            };
+            chat.onPlanEntrenamientoActualizado = () {
+              home?.sincronizarEntrenamiento(chat.planEntrenamiento);
+            };
+            return home!;
+          },
+        ),
       ],
       child: MaterialApp.router(
         title: 'FitCoach',

@@ -61,32 +61,36 @@ class HomeScreen extends StatelessWidget {
     final racha = provider.rachaActual;
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                provider.saludo,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
+        // Saludo izquierda
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              provider.saludo,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
               ),
-              const SizedBox(height: 2),
-              Text(
-                'Hola, $nombre',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Hola, $nombre',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+
+        // Derecha: racha + avatar
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (racha > 0) ...[
               Container(
@@ -107,6 +111,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
             ],
+            // Avatar — siempre a la derecha
             GestureDetector(
               onTap: () => context.push(AppConstants.routeProfile),
               child: Container(
@@ -120,9 +125,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    nombre.isNotEmpty
-                        ? nombre.substring(0, nombre.length > 2 ? 2 : nombre.length).toUpperCase()
-                        : 'U',
+                    _iniciales(nombre),
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 13,
@@ -136,6 +139,15 @@ class HomeScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _iniciales(String nombre) {
+    final partes = nombre.trim().split(' ');
+    if (partes.length >= 2 && partes[0].isNotEmpty && partes[1].isNotEmpty) {
+      return '${partes[0][0]}${partes[1][0]}'.toUpperCase();
+    }
+    if (nombre.isEmpty) return 'U';
+    return nombre.substring(0, nombre.length >= 2 ? 2 : 1).toUpperCase();
   }
 
   // ─── HERO CARD ─────────────────────────────────────────────
@@ -292,10 +304,20 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => context.push(
-                      AppConstants.routeSessionDetail,
-                      extra: dia,
-                    ),
+                    onPressed: () {
+                      const diasNombre = [
+                        'Lunes', 'Martes', 'Miércoles', 'Jueves',
+                        'Viernes', 'Sábado', 'Domingo',
+                      ];
+                      context.push(
+                        AppConstants.routeSessionDetail,
+                        extra: {
+                          'workout': dia,
+                          'diaNombre':
+                              diasNombre[DateTime.now().weekday - 1],
+                        },
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(0, 42),
                     ),

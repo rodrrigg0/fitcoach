@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
+import 'package:fitcoach/data/services/training_provider.dart';
 
 class SessionDetailScreen extends StatelessWidget {
   final WorkoutDay workout;
+  final String diaNombre;
 
-  const SessionDetailScreen({super.key, required this.workout});
+  const SessionDetailScreen({
+    super.key,
+    required this.workout,
+    required this.diaNombre,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -330,7 +337,17 @@ class SessionDetailScreen extends StatelessWidget {
 
   Widget _buildStartButton(BuildContext context) {
     return ElevatedButton(
-      onPressed: () => context.push(AppConstants.routeActiveSession),
+      onPressed: () async {
+        await context
+            .read<TrainingProvider>()
+            .iniciarSesion(workout, diaNombre);
+        if (context.mounted) {
+          context.push(
+            AppConstants.routeActiveSession,
+            extra: {'workout': workout, 'diaNombre': diaNombre},
+          );
+        }
+      },
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(double.infinity, 50),
       ),

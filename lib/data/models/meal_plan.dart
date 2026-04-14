@@ -39,6 +39,31 @@ class Meal {
         completada: json['completada'] as bool? ?? false,
       );
 
+  Meal copyWith({
+    String? tipo,
+    String? nombre,
+    int? calorias,
+    double? proteinas,
+    double? carbohidratos,
+    double? grasas,
+    String? hora,
+    List<String>? ingredientes,
+    String? preparacion,
+    bool? completada,
+  }) =>
+      Meal(
+        tipo: tipo ?? this.tipo,
+        nombre: nombre ?? this.nombre,
+        calorias: calorias ?? this.calorias,
+        proteinas: proteinas ?? this.proteinas,
+        carbohidratos: carbohidratos ?? this.carbohidratos,
+        grasas: grasas ?? this.grasas,
+        hora: hora ?? this.hora,
+        ingredientes: ingredientes ?? this.ingredientes,
+        preparacion: preparacion ?? this.preparacion,
+        completada: completada ?? this.completada,
+      );
+
   Map<String, dynamic> toJson() => {
         'tipo': tipo,
         'nombre': nombre,

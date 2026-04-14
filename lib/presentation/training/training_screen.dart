@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/data/services/training_provider.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
+import 'package:fitcoach/data/models/exercise_log.dart';
 
 class TrainingScreen extends StatelessWidget {
   const TrainingScreen({super.key});
@@ -195,7 +197,10 @@ class TrainingScreen extends StatelessWidget {
                   ? null
                   : () => context.push(
                         AppConstants.routeSessionDetail,
-                        extra: day,
+                        extra: {
+                          'workout': day,
+                          'diaNombre': diasNombre[i],
+                        },
                       ),
               onToggle: () =>
                   context.read<HomeProvider>().toggleEntrenamientoCompletado(),
@@ -203,7 +208,7 @@ class TrainingScreen extends StatelessWidget {
           }),
           _buildNotaDistribucion(plan.notaDistribucion),
           Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.only(bottom: 16),
             child: OutlinedButton(
               onPressed: provider.cargandoPlan
                   ? null
@@ -218,10 +223,396 @@ class TrainingScreen extends StatelessWidget {
               ),
             ),
           ),
+          Consumer<TrainingProvider>(
+            builder: (context, trainingProvider, _) =>
+                _buildHistorial(context, trainingProvider),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
+
+  Widget _buildHistorial(
+      BuildContext context, TrainingProvider trainingProvider) {
+    final sesiones = trainingProvider.historialSesiones;
+    if (sesiones.isEmpty) return const SizedBox.shrink();
+
+    const maxVisibles = 5;
+    final mostrar = sesiones.take(maxVisibles).toList();
+    final hayMas = sesiones.length > maxVisibles;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Text(
+            'SESIONES ANTERIORES',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        ...mostrar.map((sesion) => GestureDetector(
+              onTap: () => _showSessionDetail(context, sesion),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: AppColors.border, width: 0.5),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sesion.tituloEntrenamiento,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatFechaHistorial(sesion.fecha),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${sesion.ejercicios.length} ejercicios',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (sesion.volumenTotal > 0) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Vol: ${_formatVolumen(sesion.volumenTotal)} kg',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            )),
+        if (hayMas)
+          TextButton(
+            onPressed: () =>
+                _showAllSessions(context, trainingProvider.historialSesiones),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Ver todo el historial',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showSessionDetail(BuildContext context, WorkoutLog sesion) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.92,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundElevated,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sesion.tituloEntrenamiento,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          _formatFechaHistorial(sesion.fecha),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (sesion.volumenTotal > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(32),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Vol: ${_formatVolumen(sesion.volumenTotal)} kg',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: sesion.ejercicios.length,
+                itemBuilder: (_, i) {
+                  final ej = sesion.ejercicios[i];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.border, width: 0.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ej.ejercicioNombre,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (ej.series.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: ej.series
+                                .map((s) => Container(
+                                      padding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            AppColors.backgroundElevated,
+                                        borderRadius:
+                                            BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '${s.numero}×${s.repeticiones} ${_formatPesoStatic(s.peso)}kg',
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
+                          ),
+                        ] else
+                          const Text(
+                            'Sin series registradas',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAllSessions(
+      BuildContext context, List<WorkoutLog> sesiones) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.92,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundElevated,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'HISTORIAL COMPLETO',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: sesiones.length,
+                itemBuilder: (ctx, i) {
+                  final sesion = sesiones[i];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _showSessionDetail(context, sesion);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppColors.border, width: 0.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  sesion.tituloEntrenamiento,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  _formatFechaHistorial(sesion.fecha),
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right,
+                              color: AppColors.textSecondary, size: 18),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatFechaHistorial(DateTime fecha) {
+    const diasSemana = [
+      'Lunes', 'Martes', 'Miércoles', 'Jueves',
+      'Viernes', 'Sábado', 'Domingo',
+    ];
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre',
+      'diciembre',
+    ];
+    final dia = diasSemana[fecha.weekday - 1];
+    return '$dia ${fecha.day} de ${meses[fecha.month - 1]}';
+  }
+
+  String _formatVolumen(double v) {
+    if (v >= 1000) {
+      return '${(v / 1000).toStringAsFixed(1).replaceAll('.', ',')}k';
+    }
+    return v.toInt().toString();
+  }
+
+  static String _formatPesoStatic(double p) =>
+      p == p.truncateToDouble()
+          ? p.toInt().toString()
+          : p.toStringAsFixed(1);
 
   Widget _buildNotaDistribucion(String nota) {
     if (nota.isEmpty) return const SizedBox.shrink();

@@ -18,6 +18,7 @@ import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
+import 'package:fitcoach/data/models/exercise_log.dart';
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
@@ -151,6 +152,43 @@ class FirestoreService {
       debugPrint('FirestoreService: error leyendo nutrition de prefs: $e');
     }
     return null;
+  }
+
+  // ─── Workout logs ───────────────────────────────────────────
+
+  Future<void> guardarWorkoutLog(String uid, WorkoutLog log) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('workout_logs')
+        .doc(log.id)
+        .set(log.toJson());
+  }
+
+  Future<List<WorkoutLog>> cargarWorkoutLogs(String uid) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('workout_logs')
+        .orderBy('fecha', descending: true)
+        .limit(50)
+        .get();
+    return snapshot.docs
+        .map((doc) => WorkoutLog.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<List<ExerciseLog>> cargarHistorialEjercicio(
+      String uid, String nombreEjercicio) async {
+    final logs = await cargarWorkoutLogs(uid);
+    final resultado = logs
+        .expand((log) => log.ejercicios)
+        .where((e) =>
+            e.ejercicioNombre.toLowerCase() ==
+            nombreEjercicio.toLowerCase())
+        .toList()
+      ..sort((a, b) => a.fecha.compareTo(b.fecha));
+    return resultado;
   }
 
   // ─── Historial chat ─────────────────────────────────────────
