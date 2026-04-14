@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
@@ -6,6 +7,7 @@ import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/services/ai_service.dart';
+import 'package:fitcoach/data/services/firestore_service.dart';
 
 class HomeProvider extends ChangeNotifier {
   static const _keyPerfil = 'user_profile';
@@ -16,6 +18,7 @@ class HomeProvider extends ChangeNotifier {
   static const _keySuenoFecha = 'sueno_fecha';
 
   final AIService _ai = AIService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   UserProfile? _perfil;
   WorkoutPlan? _planEntrenamiento;
@@ -40,7 +43,7 @@ class HomeProvider extends ChangeNotifier {
 
   WorkoutDay? get entrenamientoHoy {
     if (_planEntrenamiento == null) return null;
-    final idx = DateTime.now().weekday - 1; // 0=Lunes
+    final idx = DateTime.now().weekday - 1;
     final day = _planEntrenamiento!.semana[idx];
     return day.esDescanso ? null : day;
   }
@@ -80,15 +83,14 @@ class HomeProvider extends ChangeNotifier {
 
   int get caloriasObjetivo {
     if (_perfil == null) return 2000;
-    // Harris-Benedict BMR
     double bmr;
     final p = _perfil!;
-    if (p.sexo.toLowerCase() == 'masculino' || p.sexo.toLowerCase() == 'hombre') {
+    if (p.sexo.toLowerCase() == 'masculino' ||
+        p.sexo.toLowerCase() == 'hombre') {
       bmr = 88.362 + (13.397 * p.peso) + (4.799 * p.altura) - (5.677 * p.edad);
     } else {
       bmr = 447.593 + (9.247 * p.peso) + (3.098 * p.altura) - (4.330 * p.edad);
     }
-    // Activity multiplier based on days per week
     final double multiplier;
     if (p.diasEntrenamiento <= 1) {
       multiplier = 1.2;
@@ -100,7 +102,6 @@ class HomeProvider extends ChangeNotifier {
       multiplier = 1.725;
     }
     double tdee = bmr * multiplier;
-    // Adjust for goal
     if (p.objetivo.toLowerCase().contains('perder') ||
         p.objetivo.toLowerCase().contains('adelgaz')) {
       tdee -= 300;
@@ -154,26 +155,64 @@ class HomeProvider extends ChangeNotifier {
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
 
-      // Perfil
+      // Perfil — SharedPreferences primero, luego Firestore
       final perfilJson = prefs.getString(_keyPerfil);
       if (perfilJson != null) {
         _perfil = UserProfile.fromJson(
             jsonDecode(perfilJson) as Map<String, dynamic>);
       }
-
-      // Plan entrenamiento
-      final workoutJson = prefs.getString(_keyWorkoutPlan);
-      if (workoutJson != null) {
-        _planEntrenamiento = WorkoutPlan.fromJson(
-            jsonDecode(workoutJson) as Map<String, dynamic>);
+      if (_perfil == null && uid != null) {
+        try {
+          _perfil = await _firestoreService
+              .cargarPerfil(uid)
+              .timeout(const Duration(seconds: 5));
+          if (_perfil != null) {
+            await prefs.setString(
+                _keyPerfil, jsonEncode(_perfil!.toJson()));
+          }
+        } catch (e) {
+          debugPrint('HomeProvider: error cargando perfil de Firestore: $e');
+        }
       }
 
-      // Plan nutrición
-      final mealJson = prefs.getString(_keyMealPlan);
-      if (mealJson != null) {
-        _planNutricion = MealPlan.fromJson(
-            jsonDecode(mealJson) as Map<String, dynamic>);
+      // Planes — Firestore (con fallback a SharedPreferences internamente)
+      if (uid != null) {
+        try {
+          _planEntrenamiento = await _firestoreService
+              .cargarPlanEntrenamiento(uid)
+              .timeout(const Duration(seconds: 8));
+        } catch (_) {
+          final workoutJson = prefs.getString(_keyWorkoutPlan);
+          if (workoutJson != null) {
+            _planEntrenamiento = WorkoutPlan.fromJson(
+                jsonDecode(workoutJson) as Map<String, dynamic>);
+          }
+        }
+        try {
+          _planNutricion = await _firestoreService
+              .cargarPlanNutricion(uid)
+              .timeout(const Duration(seconds: 8));
+        } catch (_) {
+          final mealJson = prefs.getString(_keyMealPlan);
+          if (mealJson != null) {
+            _planNutricion = MealPlan.fromJson(
+                jsonDecode(mealJson) as Map<String, dynamic>);
+          }
+        }
+      } else {
+        // Sin uid — solo SharedPreferences
+        final workoutJson = prefs.getString(_keyWorkoutPlan);
+        if (workoutJson != null) {
+          _planEntrenamiento = WorkoutPlan.fromJson(
+              jsonDecode(workoutJson) as Map<String, dynamic>);
+        }
+        final mealJson = prefs.getString(_keyMealPlan);
+        if (mealJson != null) {
+          _planNutricion = MealPlan.fromJson(
+              jsonDecode(mealJson) as Map<String, dynamic>);
+        }
       }
 
       // Días completados
@@ -217,8 +256,19 @@ class HomeProvider extends ChangeNotifier {
           jsonDecode(cleanJson) as Map<String, dynamic>);
       _planEntrenamiento = plan;
 
+      // Guardar en SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyWorkoutPlan, jsonEncode(plan.toJson()));
+
+      // Guardar en Firestore
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        try {
+          await _firestoreService.guardarPlanEntrenamiento(plan, uid);
+        } catch (e) {
+          debugPrint('HomeProvider: error guardando entreno en Firestore: $e');
+        }
+      }
     } catch (e) {
       _error = 'Error generando plan: $e';
     } finally {
@@ -248,8 +298,19 @@ class HomeProvider extends ChangeNotifier {
           jsonDecode(cleanJson) as Map<String, dynamic>);
       _planNutricion = plan;
 
+      // Guardar en SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyMealPlan, jsonEncode(plan.toJson()));
+
+      // Guardar en Firestore
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        try {
+          await _firestoreService.guardarPlanNutricion(plan, uid);
+        } catch (e) {
+          debugPrint('HomeProvider: error guardando nutricion en Firestore: $e');
+        }
+      }
     } catch (e) {
       _error = 'Error generando plan nutricional: $e';
     } finally {
@@ -301,6 +362,36 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> actualizarObjetivosMacros({
+    required int proteinas,
+    required int carbos,
+    required int grasas,
+  }) async {
+    if (_planNutricion == null) return;
+    final cals = proteinas * 4 + carbos * 4 + grasas * 9;
+    _planNutricion = MealPlan(
+      comidas: _planNutricion!.comidas,
+      caloriasObjetivo: cals,
+      proteinasObjetivo: proteinas.toDouble(),
+      carbosObjetivo: carbos.toDouble(),
+      grasasObjetivo: grasas.toDouble(),
+      fechaGeneracion: _planNutricion!.fechaGeneracion,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyMealPlan, jsonEncode(_planNutricion!.toJson()));
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        await _firestoreService.guardarPlanNutricion(_planNutricion!, uid);
+      } catch (e) {
+        debugPrint('HomeProvider: error guardando macros en Firestore: $e');
+      }
+    }
+    notifyListeners();
+    await generarPlanNutricion();
+  }
+
   // ─── Helpers privados ──────────────────────────────────────
 
   String _buildWorkoutPrompt() {
@@ -342,30 +433,8 @@ Estructura exacta:
 Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Responde SOLO con JSON válido, sin texto extra.''';
   }
 
-  Future<void> actualizarObjetivosMacros({
-    required int proteinas,
-    required int carbos,
-    required int grasas,
-  }) async {
-    if (_planNutricion == null) return;
-    final cals = proteinas * 4 + carbos * 4 + grasas * 9;
-    _planNutricion = MealPlan(
-      comidas: _planNutricion!.comidas,
-      caloriasObjetivo: cals,
-      proteinasObjetivo: proteinas.toDouble(),
-      carbosObjetivo: carbos.toDouble(),
-      grasasObjetivo: grasas.toDouble(),
-      fechaGeneracion: _planNutricion!.fechaGeneracion,
-    );
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyMealPlan, jsonEncode(_planNutricion!.toJson()));
-    notifyListeners();
-    await generarPlanNutricion();
-  }
-
   String _buildNutritionPrompt() {
     final p = _perfil!;
-    // Use existing plan objectives if available (may have been manually adjusted)
     final int cals;
     final int proteinas;
     final int carbos;

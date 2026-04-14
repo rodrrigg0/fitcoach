@@ -23,16 +23,19 @@ class NutritionScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: AppColors.background,
           body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                _buildHeader(context, provider),
-                if (provider.planNutricion == null)
-                  _buildEmptyState(context, provider)
-                else ...[
-                  _buildMacrosSummary(provider),
-                  _buildMealList(provider),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context, provider),
+                  if (provider.planNutricion == null)
+                    _buildEmptyState(context, provider)
+                  else ...[
+                    _buildMacrosSummary(provider),
+                    _buildMealList(context, provider),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );
@@ -41,136 +44,130 @@ class NutritionScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, HomeProvider provider) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Nutrición',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Nutrición',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          if (provider.planNutricion != null) ...[
+            GestureDetector(
+              onTap: () => _showMacroAdjustSheet(context, provider),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(26),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Macros',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
-            if (provider.planNutricion != null) ...[
-              GestureDetector(
-                onTap: () => _showMacroAdjustSheet(context, provider),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(26),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'Macros',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: provider.cargandoNutricion
+                  ? null
+                  : () => provider.generarPlanNutricion(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundCard,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: provider.cargandoNutricion
-                    ? null
-                    : () => provider.generarPlanNutricion(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundCard,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: provider.cargandoNutricion
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        )
-                      : const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.refresh,
-                                color: AppColors.textSecondary, size: 16),
-                            SizedBox(width: 6),
-                            Text(
-                              'Regenerar',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
+                child: provider.cargandoNutricion
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
                         ),
-                ),
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.refresh,
+                              color: AppColors.textSecondary, size: 16),
+                          SizedBox(width: 6),
+                          Text(
+                            'Regenerar',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildEmptyState(BuildContext context, HomeProvider provider) {
-    return SliverFillRemaining(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundCard,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.restaurant_menu,
-                  color: AppColors.textSecondary,
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Sin plan nutricional',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Genera tu plan de alimentación personalizado con IA',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 28),
-              if (provider.cargandoNutricion)
-                const CircularProgressIndicator(color: AppColors.primary)
-              else
-                ElevatedButton(
-                  onPressed: () => provider.generarPlanNutricion(),
-                  child: const Text('Generar plan nutricional'),
-                ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 60, 32, 60),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.backgroundCard,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.restaurant_menu,
+              color: AppColors.textSecondary,
+              size: 36,
+            ),
           ),
-        ),
+          const SizedBox(height: 20),
+          const Text(
+            'Sin plan nutricional',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Genera tu plan de alimentación personalizado con IA',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 28),
+          if (provider.cargandoNutricion)
+            const CircularProgressIndicator(color: AppColors.primary)
+          else
+            ElevatedButton(
+              onPressed: () => provider.generarPlanNutricion(),
+              child: const Text('Generar plan nutricional'),
+            ),
+        ],
       ),
     );
   }
@@ -181,73 +178,71 @@ class NutritionScreen extends StatelessWidget {
     final objetivo = plan.caloriasObjetivo;
     final progreso = objetivo > 0 ? consumidas / objetivo : 0.0;
 
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.backgroundCard,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Calorías hoy',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundCard,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Calorías hoy',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
                   ),
-                  Text(
-                    '$consumidas / $objetivo kcal',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progreso.clamp(0.0, 1.0),
-                  backgroundColor: AppColors.backgroundElevated,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                  minHeight: 6,
                 ),
+                Text(
+                  '$consumidas / $objetivo kcal',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progreso.clamp(0.0, 1.0),
+                backgroundColor: AppColors.backgroundElevated,
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                minHeight: 6,
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _macroItem(
-                      'Proteínas',
-                      '${plan.proteinasConsumidas.round()}g',
-                      '${plan.proteinasObjetivo.round()}g',
-                      const Color(0xFF4FC3F7)),
-                  const SizedBox(width: 12),
-                  _macroItem(
-                      'Carbos',
-                      '${(plan.comidas.where((m) => m.completada).fold(0.0, (s, m) => s + m.carbohidratos)).round()}g',
-                      '${plan.carbosObjetivo.round()}g',
-                      const Color(0xFFFFB74D)),
-                  const SizedBox(width: 12),
-                  _macroItem(
-                      'Grasas',
-                      '${(plan.comidas.where((m) => m.completada).fold(0.0, (s, m) => s + m.grasas)).round()}g',
-                      '${plan.grasasObjetivo.round()}g',
-                      const Color(0xFFEF9A9A)),
-                ],
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _macroItem(
+                    'Proteínas',
+                    '${plan.proteinasConsumidas.round()}g',
+                    '${plan.proteinasObjetivo.round()}g',
+                    const Color(0xFF4FC3F7)),
+                const SizedBox(width: 12),
+                _macroItem(
+                    'Carbos',
+                    '${(plan.comidas.where((m) => m.completada).fold(0.0, (s, m) => s + m.carbohidratos)).round()}g',
+                    '${plan.carbosObjetivo.round()}g',
+                    const Color(0xFFFFB74D)),
+                const SizedBox(width: 12),
+                _macroItem(
+                    'Grasas',
+                    '${(plan.comidas.where((m) => m.completada).fold(0.0, (s, m) => s + m.grasas)).round()}g',
+                    '${plan.grasasObjetivo.round()}g',
+                    const Color(0xFFEF9A9A)),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -293,25 +288,19 @@ class NutritionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMealList(HomeProvider provider) {
+  Widget _buildMealList(BuildContext context, HomeProvider provider) {
     final comidas = provider.comidasHoy;
-    return SliverPadding(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, i) {
-            if (i == comidas.length) {
-              return _buildTotalesCard(provider);
-            }
-            final meal = comidas[i];
-            return _MealCard(
-              meal: meal,
-              onToggle: () =>
-                  context.read<HomeProvider>().toggleComidaCompletada(meal),
-            );
-          },
-          childCount: comidas.length + 1,
-        ),
+      child: Column(
+        children: [
+          ...comidas.map((meal) => _MealCard(
+                meal: meal,
+                onToggle: () =>
+                    context.read<HomeProvider>().toggleComidaCompletada(meal),
+              )),
+          _buildTotalesCard(provider),
+        ],
       ),
     );
   }
@@ -575,7 +564,6 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
           Center(
             child: Container(
               width: 36,
@@ -587,8 +575,6 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Title + calorie display
           Row(
             children: [
               const Expanded(
@@ -612,8 +598,6 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Animated distribution bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: SizedBox(
@@ -659,37 +643,12 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
             ],
           ),
           const SizedBox(height: 20),
-
-          // Sliders
-          _sliderRow(
-            'Proteínas',
-            _proteinas,
-            50,
-            350,
-            'g',
-            const Color(0xFF4FC3F7),
-            (v) => setState(() => _proteinas = v),
-          ),
-          _sliderRow(
-            'Carbohidratos',
-            _carbos,
-            50,
-            600,
-            'g',
-            const Color(0xFFFFB74D),
-            (v) => setState(() => _carbos = v),
-          ),
-          _sliderRow(
-            'Grasas',
-            _grasas,
-            20,
-            200,
-            'g',
-            const Color(0xFFEF9A9A),
-            (v) => setState(() => _grasas = v),
-          ),
-
-          // Warnings
+          _sliderRow('Proteínas', _proteinas, 50, 350, 'g',
+              const Color(0xFF4FC3F7), (v) => setState(() => _proteinas = v)),
+          _sliderRow('Carbohidratos', _carbos, 50, 600, 'g',
+              const Color(0xFFFFB74D), (v) => setState(() => _carbos = v)),
+          _sliderRow('Grasas', _grasas, 20, 200, 'g',
+              const Color(0xFFEF9A9A), (v) => setState(() => _grasas = v)),
           if (_warnProtein) ...[
             const SizedBox(height: 8),
             _warning(
@@ -701,8 +660,6 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
                 'Total inferior a 1200 kcal. No recomendado sin supervisión médica.'),
           ],
           const SizedBox(height: 20),
-
-          // Buttons
           Row(
             children: [
               Expanded(
@@ -772,8 +729,8 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
                 thumbColor: color,
                 overlayColor: color.withAlpha(40),
                 trackHeight: 3,
-                thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 6),
+                thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 6),
               ),
               child: Slider(
                 value: value.clamp(min, max),
@@ -807,8 +764,8 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
         Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-                color: color, shape: BoxShape.circle)),
+            decoration:
+                BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
         Text(label,
             style: const TextStyle(

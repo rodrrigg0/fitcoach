@@ -71,12 +71,9 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: chat.tieneHistorial
-                        ? _buildMessageList(chat)
-                        : _buildWelcomeState(chat),
-                  ),
+                  child: chat.tieneHistorial
+                      ? _buildMessageList(chat)
+                      : _buildWelcomeState(chat),
                 ),
                 _buildInputBar(chat),
               ],
@@ -87,98 +84,78 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ─── Estado vacío ────────────────────────────────────────────
+  // ─── Estado vacío ─────────────────────────────────────────
 
   Widget _buildWelcomeState(ChatProvider chat) {
     final nombre = chat.perfil?.nombre ?? '';
     final deporte = chat.perfil?.deportes.firstOrNull ?? 'tu deporte';
     final sugerencias = _getSugerencias(chat, deporte);
 
-    return Column(
-      key: const ValueKey('welcome'),
-      children: [
-        Expanded(
-          flex: 42,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary, width: 2),
-                ),
-                child: const Center(
-                  child: Text(
-                    'FC',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              child: const Center(
+                child: Text(
+                  'FC',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                '¿En qué puedo',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w300,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const Text(
-                'ayudarte hoy?',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                nombre.isNotEmpty
-                    ? 'Hola $nombre, soy tu entrenador personal'
-                    : 'Hola, soy tu entrenador personal',
-                style: const TextStyle(
-                  color: Color(0xFF888888),
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          flex: 58,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Center(
-                  child: Text(
-                    'SUGERENCIAS',
-                    style: TextStyle(
-                      color: Color(0xFF444444),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...sugerencias.map(_buildSugerencia),
-              ],
             ),
-          ),
+            const SizedBox(height: 20),
+            const Text(
+              '¿En qué puedo',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 32,
+                fontWeight: FontWeight.w300,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const Text(
+              'ayudarte hoy?',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              nombre.isNotEmpty
+                  ? 'Hola $nombre, soy tu entrenador personal'
+                  : 'Hola, soy tu entrenador personal',
+              style: const TextStyle(
+                color: Color(0xFF888888),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: sugerencias.map(_buildSugerencia).toList(),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -254,32 +231,46 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ─── Lista de mensajes ───────────────────────────────────────
+  // ─── Lista de mensajes ────────────────────────────────────
 
   Widget _buildMessageList(ChatProvider chat) {
     final msgs = chat.mensajes;
     return ListView.builder(
-      key: const ValueKey('messages'),
       controller: _scrollController,
       reverse: true,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: msgs.length,
       itemBuilder: (ctx, i) {
         final msg = msgs[msgs.length - 1 - i];
         if (msg.estaCargando) return const TypingIndicator();
-        return _AnimatedMessage(
-          animate: _shouldAnimate(msg),
+        final animate = _shouldAnimate(msg);
+        return TweenAnimationBuilder<double>(
+          key: ValueKey('bubble_${msg.id}'),
+          tween: Tween<double>(
+              begin: animate ? 0.0 : 1.0, end: 1.0),
+          duration: animate
+              ? const Duration(milliseconds: 350)
+              : Duration.zero,
+          curve: Curves.easeOut,
+          builder: (ctx, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 20.0 * (1.0 - value)),
+                child: child,
+              ),
+            );
+          },
           child: _BubbleWidget(mensaje: msg),
         );
       },
     );
   }
 
-  // ─── Campo de entrada ────────────────────────────────────────
+  // ─── Campo de entrada ─────────────────────────────────────
 
   Widget _buildInputBar(ChatProvider chat) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
-
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       decoration: const BoxDecoration(
@@ -347,7 +338,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// ─── Sugerencia data class ────────────────────────────────────
+// ─── Sugerencia data class ────────────────────────────────
 
 class _Sugerencia {
   final String titulo;
@@ -355,7 +346,7 @@ class _Sugerencia {
   const _Sugerencia(this.titulo, this.descripcion);
 }
 
-// ─── Typing indicator ─────────────────────────────────────────
+// ─── Typing indicator ─────────────────────────────────────
 
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
@@ -365,9 +356,8 @@ class TypingIndicator extends StatefulWidget {
 }
 
 class _TypingIndicatorState extends State<TypingIndicator>
-    with TickerProviderStateMixin {
-  late final List<AnimationController> _controllers;
-  late final List<Animation<double>> _animations;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
   static const _maxHeights = [18.0, 26.0, 22.0, 28.0, 16.0];
   int _textIdx = 0;
 
@@ -380,24 +370,10 @@ class _TypingIndicatorState extends State<TypingIndicator>
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(
-      5,
-      (i) => AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 600),
-      ),
-    );
-    _animations = _controllers.asMap().entries.map((e) {
-      return Tween<double>(begin: 4, end: _maxHeights[e.key]).animate(
-        CurvedAnimation(parent: e.value, curve: Curves.easeInOut),
-      );
-    }).toList();
-
-    for (int i = 0; i < 5; i++) {
-      Future.delayed(Duration(milliseconds: i * 120), () {
-        if (mounted) _controllers[i].repeat(reverse: true);
-      });
-    }
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
 
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 2));
@@ -409,9 +385,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   @override
   void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
-    }
+    _controller.dispose();
     super.dispose();
   }
 
@@ -454,12 +428,25 @@ class _TypingIndicatorState extends State<TypingIndicator>
                     ),
                   );
                 }
+                final anim = Tween<double>(
+                        begin: 4, end: _maxHeights[i])
+                    .animate(
+                  CurvedAnimation(
+                    parent: _controller,
+                    curve: Interval(
+                      (i * 0.15).clamp(0.0, 1.0),
+                      (i * 0.15 + 0.55).clamp(0.0, 1.0),
+                      curve: Curves.easeInOut,
+                    ),
+                  ),
+                );
                 return AnimatedBuilder(
-                  animation: _animations[i],
-                  builder: (ctx, child) => Container(
+                  animation: anim,
+                  builder: (ctx, _) => Container(
                     width: 3,
-                    height: _animations[i].value,
-                    margin: EdgeInsets.only(left: i > 0 ? 3 : 0),
+                    height: anim.value,
+                    margin:
+                        EdgeInsets.only(left: i > 0 ? 3 : 0),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(2),
@@ -487,61 +474,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
   }
 }
 
-// ─── Animación de entrada ─────────────────────────────────────
-
-class _AnimatedMessage extends StatefulWidget {
-  final Widget child;
-  final bool animate;
-
-  const _AnimatedMessage({required this.child, required this.animate});
-
-  @override
-  State<_AnimatedMessage> createState() => _AnimatedMessageState();
-}
-
-class _AnimatedMessageState extends State<_AnimatedMessage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _opacity;
-  late final Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-    _opacity = Tween<double>(begin: 0, end: 1)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-    _slide = Tween<Offset>(
-            begin: const Offset(0, 0.08), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-
-    if (widget.animate &&
-        !MediaQueryData.fromView(View.of(context)).disableAnimations) {
-      _ctrl.forward();
-    } else {
-      _ctrl.value = 1;
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacity,
-      child: SlideTransition(position: _slide, child: widget.child),
-    );
-  }
-}
-
-// ─── Burbuja de mensaje ───────────────────────────────────────
+// ─── Burbuja de mensaje ───────────────────────────────────
 
 class _BubbleWidget extends StatelessWidget {
   final ChatMessage mensaje;
@@ -549,7 +482,6 @@ class _BubbleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mensaje de sistema
     if (mensaje.esMensajeSistema) {
       return Center(
         child: Container(
@@ -582,7 +514,6 @@ class _BubbleWidget extends StatelessWidget {
       );
     }
 
-    // Mensaje del usuario
     if (mensaje.esUsuario) {
       return Align(
         alignment: Alignment.centerRight,
@@ -665,7 +596,6 @@ class _BubbleWidget extends StatelessWidget {
       }
       final stripped = line.trimLeft();
 
-      // Bullet
       if (stripped.startsWith('- ') || stripped.startsWith('• ')) {
         final content = stripped.substring(2);
         widgets.add(Padding(
@@ -695,7 +625,6 @@ class _BubbleWidget extends StatelessWidget {
         continue;
       }
 
-      // Numbered list
       final numMatch =
           RegExp(r'^(\d+)\.\s(.*)').firstMatch(stripped);
       if (numMatch != null) {
@@ -727,7 +656,6 @@ class _BubbleWidget extends StatelessWidget {
         continue;
       }
 
-      // Bold: **text**
       if (stripped.startsWith('**') &&
           stripped.endsWith('**') &&
           stripped.length > 4) {
@@ -746,7 +674,6 @@ class _BubbleWidget extends StatelessWidget {
         continue;
       }
 
-      // Normal text
       widgets.add(Padding(
         padding: const EdgeInsets.only(bottom: 3),
         child: Text(

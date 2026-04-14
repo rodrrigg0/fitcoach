@@ -13,84 +13,91 @@ class SessionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(context),
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildInfoRow(),
-                const SizedBox(height: 24),
-                _buildSection('Por qué hoy', workout.porQueHoy),
-                const SizedBox(height: 20),
-                _buildObjectivos(),
-                const SizedBox(height: 20),
-                if (workout.ejercicios.isNotEmpty) ...[
-                  _buildEjercicios(),
-                  const SizedBox(height: 20),
-                ],
-                _buildConsejo(),
-                const SizedBox(height: 32),
-                _buildStartButton(context),
-                const SizedBox(height: 20),
-              ]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      backgroundColor: AppColors.background,
-      expandedHeight: 200,
-      pinned: true,
-      leading: GestureDetector(
-        onTap: () => context.pop(),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.backgroundCard,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-        ),
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: AppColors.backgroundCard,
+      body: SafeArea(
+        child: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(26),
-                  borderRadius: BorderRadius.circular(16),
+              _buildHeader(context),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow(),
+                    const SizedBox(height: 24),
+                    _buildSection('Por qué hoy', workout.porQueHoy),
+                    const SizedBox(height: 20),
+                    _buildObjectivos(),
+                    const SizedBox(height: 20),
+                    if (workout.ejercicios.isNotEmpty) ...[
+                      _buildEjercicios(),
+                      const SizedBox(height: 20),
+                    ],
+                    _buildConsejo(),
+                    const SizedBox(height: 32),
+                    _buildStartButton(context),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                child: Icon(
-                  _iconForTipo(workout.tipo),
-                  color: AppColors.primary,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                workout.titulo,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      color: AppColors.backgroundCard,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(26),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              _iconForTipo(workout.tipo),
+              color: AppColors.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            workout.titulo,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -103,7 +110,8 @@ class SessionDetailScreen extends StatelessWidget {
         _infoChip(Icons.location_on_outlined, workout.lugar),
         const SizedBox(width: 10),
         if (workout.ejercicios.isNotEmpty)
-          _infoChip(Icons.fitness_center, '${workout.ejercicios.length} ejerc.'),
+          _infoChip(
+              Icons.fitness_center, '${workout.ejercicios.length} ejerc.'),
       ],
     );
   }
@@ -258,7 +266,9 @@ class SessionDetailScreen extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (ej.series != null || ej.duracion != null || ej.distancia != null)
+                      if (ej.series != null ||
+                          ej.duracion != null ||
+                          ej.distancia != null)
                         const SizedBox(height: 3),
                       if (ej.series != null)
                         Text(
@@ -321,6 +331,9 @@ class SessionDetailScreen extends StatelessWidget {
   Widget _buildStartButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () => context.push(AppConstants.routeActiveSession),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 50),
+      ),
       child: const Text('Iniciar sesión'),
     );
   }

@@ -10,7 +10,10 @@
 //   }
 // }
 
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
@@ -18,6 +21,9 @@ import 'package:fitcoach/data/models/chat_message.dart';
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
+
+  static const _keyWorkoutPlan = 'workout_plan';
+  static const _keyMealPlan = 'meal_plan';
 
   Future<void> guardarPerfil(UserProfile perfil, String uid) async {
     await _firestore
@@ -66,17 +72,41 @@ class FirestoreService {
         .collection('plans')
         .doc('workout')
         .set(plan.toJson());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyWorkoutPlan, jsonEncode(plan.toJson()));
+    } catch (e) {
+      debugPrint('FirestoreService: error guardando workout en prefs: $e');
+    }
   }
 
   Future<WorkoutPlan?> cargarPlanEntrenamiento(String uid) async {
-    final doc = await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('plans')
-        .doc('workout')
-        .get();
-    if (!doc.exists) return null;
-    return WorkoutPlan.fromJson(doc.data()!);
+    // Intenta Firestore primero
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('plans')
+          .doc('workout')
+          .get()
+          .timeout(const Duration(seconds: 8));
+      if (doc.exists && doc.data() != null) {
+        return WorkoutPlan.fromJson(doc.data()!);
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: error cargando workout: $e');
+    }
+    // Fallback a SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_keyWorkoutPlan);
+      if (json != null) {
+        return WorkoutPlan.fromJson(jsonDecode(json) as Map<String, dynamic>);
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: error leyendo workout de prefs: $e');
+    }
+    return null;
   }
 
   Future<void> guardarPlanNutricion(MealPlan plan, String uid) async {
@@ -86,17 +116,41 @@ class FirestoreService {
         .collection('plans')
         .doc('nutrition')
         .set(plan.toJson());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyMealPlan, jsonEncode(plan.toJson()));
+    } catch (e) {
+      debugPrint('FirestoreService: error guardando nutrition en prefs: $e');
+    }
   }
 
   Future<MealPlan?> cargarPlanNutricion(String uid) async {
-    final doc = await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('plans')
-        .doc('nutrition')
-        .get();
-    if (!doc.exists) return null;
-    return MealPlan.fromJson(doc.data()!);
+    // Intenta Firestore primero
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('plans')
+          .doc('nutrition')
+          .get()
+          .timeout(const Duration(seconds: 8));
+      if (doc.exists && doc.data() != null) {
+        return MealPlan.fromJson(doc.data()!);
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: error cargando nutrition: $e');
+    }
+    // Fallback a SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_keyMealPlan);
+      if (json != null) {
+        return MealPlan.fromJson(jsonDecode(json) as Map<String, dynamic>);
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: error leyendo nutrition de prefs: $e');
+    }
+    return null;
   }
 
   // ─── Historial chat ─────────────────────────────────────────

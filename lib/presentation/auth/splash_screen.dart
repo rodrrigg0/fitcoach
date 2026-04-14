@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
+import 'package:fitcoach/data/services/home_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,8 +49,13 @@ class _SplashScreenState extends State<SplashScreen>
         await firestoreService.onboardingCompletado(user.uid);
     if (!mounted) return;
 
-    context.go(
-        completado ? AppConstants.routeHome : AppConstants.routeOnboarding);
+    if (completado) {
+      await context.read<HomeProvider>().cargarDatos();
+      if (!mounted) return;
+      context.go(AppConstants.routeHome);
+    } else {
+      context.go(AppConstants.routeOnboarding);
+    }
   }
 
   @override
