@@ -19,6 +19,7 @@ import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/models/exercise_log.dart';
+import 'package:fitcoach/data/models/weight_log.dart';
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
@@ -189,6 +190,30 @@ class FirestoreService {
         .toList()
       ..sort((a, b) => a.fecha.compareTo(b.fecha));
     return resultado;
+  }
+
+  // ─── Registro de peso ───────────────────────────────────────
+
+  Future<void> guardarPeso(String uid, WeightLog log) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('weight_logs')
+        .doc(log.fecha.toIso8601String().replaceAll(':', '-'))
+        .set(log.toJson());
+  }
+
+  Future<List<WeightLog>> cargarPesos(String uid) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('weight_logs')
+        .orderBy('fecha', descending: false)
+        .limit(30)
+        .get();
+    return snapshot.docs
+        .map((d) => WeightLog.fromJson(d.data()))
+        .toList();
   }
 
   // ─── Historial chat ─────────────────────────────────────────

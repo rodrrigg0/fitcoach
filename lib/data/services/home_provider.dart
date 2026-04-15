@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,8 @@ import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
+import 'package:fitcoach/data/models/shopping_item.dart';
+import 'package:fitcoach/data/models/weight_log.dart';
 import 'package:fitcoach/data/services/ai_service.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
 
@@ -16,6 +19,7 @@ class HomeProvider extends ChangeNotifier {
   static const _keyDiasCompletados = 'dias_completados';
   static const _keySueno = 'sueno_hoy';
   static const _keySuenoFecha = 'sueno_fecha';
+  static const _keyListaCompra = 'lista_compra';
 
   final AIService _ai = AIService();
   final FirestoreService _firestoreService = FirestoreService();
@@ -30,6 +34,10 @@ class HomeProvider extends ChangeNotifier {
   int _horasSueno = 0;
   bool _suenoRegistradoHoy = false;
   List<String> _diasCompletados = [];
+  List<ShoppingItem> _listaCompra = [];
+  bool _generandoLista = false;
+  List<WeightLog> _registrosPeso = [];
+  bool _cargandoPesos = false;
 
   UserProfile? get perfil => _perfil;
   WorkoutPlan? get planEntrenamiento => _planEntrenamiento;
@@ -40,6 +48,10 @@ class HomeProvider extends ChangeNotifier {
   String? get error => _error;
   int get horasSueno => _horasSueno;
   bool get suenoRegistradoHoy => _suenoRegistradoHoy;
+  List<ShoppingItem> get listaCompra => _listaCompra;
+  bool get generandoLista => _generandoLista;
+  List<WeightLog> get registrosPeso => _registrosPeso;
+  bool get cargandoPesos => _cargandoPesos;
 
   WorkoutDay? get entrenamientoHoy {
     if (_planEntrenamiento == null) return null;
@@ -225,6 +237,24 @@ class HomeProvider extends ChangeNotifier {
         _horasSueno = prefs.getInt(_keySueno) ?? 0;
         _suenoRegistradoHoy = true;
       }
+
+      // Lista de la compra
+      try {
+        final listaJson = prefs.getString(_keyListaCompra);
+        if (listaJson != null) {
+          final list = jsonDecode(listaJson) as List<dynamic>;
+          _listaCompra = list
+              .map((e) => ShoppingItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      } catch (e) {
+        debugPrint('HomeProvider: error cargando lista compra: $e');
+      }
+
+      // Pesos — carga asíncrona desde Firestore
+      if (uid != null) {
+        unawaited(_cargarPesosInterno(uid));
+      }
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -374,6 +404,114 @@ class HomeProvider extends ChangeNotifier {
     await prefs.setInt(_keySueno, horas);
     await prefs.setString(_keySuenoFecha, _isoDate(DateTime.now()));
     notifyListeners();
+  }
+
+  // ─── Lista de la compra ─────────────────────────────────────
+
+  Future<void> generarListaCompra() async {
+    if (_planNutricion == null || _generandoLista) return;
+    _generandoLista = true;
+    notifyListeners();
+
+    try {
+      final ingredientes = _planNutricion!.comidas
+          .expand((m) => m.ingredientes)
+          .toList();
+
+      final prompt =
+          'Tengo estos ingredientes del plan nutricional diario de un atleta '
+          '(se repite 7 días a la semana): ${ingredientes.join(', ')}. '
+          'Agrupa los ingredientes repetidos, suma las cantidades necesarias '
+          'para 7 días y organízalos por categorías. '
+          'Categorías posibles: Proteínas, Lácteos, Cereales, Frutas, '
+          'Verduras, Grasas, Otros. '
+          'Responde SOLO con JSON: '
+          '{"items":[{"nombre":"Pechuga de pollo","cantidad":"1.5 kg",'
+          '"categoria":"Proteínas"}]}';
+
+      final respuesta = await _ai.enviarMensaje(
+        historial: const [],
+        mensajeUsuario: prompt,
+        systemPrompt:
+            'Eres un asistente de nutrición. Responde SOLO con JSON válido sin texto extra.',
+        maxTokens: 2000,
+      );
+
+      final jsonStr = _extraerJson(respuesta);
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final items = (data['items'] as List<dynamic>)
+          .map((e) => ShoppingItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+      _listaCompra = items;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _keyListaCompra,
+          jsonEncode(_listaCompra.map((i) => i.toJson()).toList()));
+    } catch (e) {
+      debugPrint('HomeProvider: error generando lista compra: $e');
+    } finally {
+      _generandoLista = false;
+      notifyListeners();
+    }
+  }
+
+  void toggleItemComprado(int index) {
+    if (index < 0 || index >= _listaCompra.length) return;
+    _listaCompra = List.of(_listaCompra);
+    _listaCompra[index] =
+        _listaCompra[index].copyWith(comprado: !_listaCompra[index].comprado);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString(
+          _keyListaCompra,
+          jsonEncode(_listaCompra.map((i) => i.toJson()).toList()));
+    });
+    notifyListeners();
+  }
+
+  // ─── Registro de peso ────────────────────────────────────────
+
+  Future<void> _cargarPesosInterno(String uid) async {
+    try {
+      _registrosPeso =
+          await _firestoreService.cargarPesos(uid);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('HomeProvider: error cargando pesos: $e');
+    }
+  }
+
+  Future<void> cargarPesos() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    _cargandoPesos = true;
+    notifyListeners();
+    try {
+      _registrosPeso = await _firestoreService.cargarPesos(uid);
+    } catch (e) {
+      debugPrint('HomeProvider: error cargando pesos: $e');
+    } finally {
+      _cargandoPesos = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> registrarPeso(double peso, String notas) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final log = WeightLog(
+      fecha: DateTime.now(),
+      peso: peso,
+      notas: notas,
+    );
+    try {
+      await _firestoreService.guardarPeso(uid, log);
+      _registrosPeso = [..._registrosPeso, log]
+        ..sort((a, b) => a.fecha.compareTo(b.fecha));
+      notifyListeners();
+    } catch (e) {
+      debugPrint('HomeProvider: error guardando peso: $e');
+    }
   }
 
   Future<void> actualizarObjetivosMacros({
