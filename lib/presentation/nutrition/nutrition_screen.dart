@@ -4,6 +4,7 @@ import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/shopping_item.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/meal_detail_sheet.dart';
 
 void _showMacroAdjustSheet(BuildContext context, HomeProvider provider) {
@@ -39,7 +40,7 @@ class NutritionScreen extends StatelessWidget {
                       ),
                     )
                   else ...[
-                    _buildTabBar(),
+                    _buildTabBar(context),
                     Expanded(
                       child: TabBarView(
                         children: [
@@ -66,10 +67,10 @@ class NutritionScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Nutrición',
-              style: TextStyle(
+              AppLocalizations.of(context)!.nutritionTitle,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -86,9 +87,9 @@ class NutritionScreen extends StatelessWidget {
                   color: AppColors.primary.withAlpha(26),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
-                  'Macros',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.nutritionMacros,
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -117,15 +118,15 @@ class NutritionScreen extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.refresh,
+                          const Icon(Icons.refresh,
                               color: AppColors.textSecondary, size: 16),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            'Regenerar',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.nutritionRegenerate,
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -142,25 +143,26 @@ class NutritionScreen extends StatelessWidget {
 
   // ── TAB BAR ─────────────────────────────────────────────────
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       color: AppColors.background,
-      child: const TabBar(
+      child: TabBar(
         indicatorColor: AppColors.primary,
         indicatorWeight: 2,
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: AppColors.textPrimary,
         unselectedLabelColor: AppColors.textSecondary,
-        labelStyle: TextStyle(
+        labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelStyle: TextStyle(fontSize: 13),
+        unselectedLabelStyle: const TextStyle(fontSize: 13),
         dividerColor: AppColors.border,
         tabs: [
-          Tab(text: 'Hoy'),
-          Tab(text: 'Semana'),
-          Tab(text: 'Compra'),
+          Tab(text: l10n.nutritionTabToday),
+          Tab(text: l10n.nutritionTabWeek),
+          Tab(text: l10n.nutritionTabShop),
         ],
       ),
     );
@@ -172,7 +174,7 @@ class NutritionScreen extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildMacrosSummary(provider),
+          _buildMacrosSummary(context, provider),
           _buildMealList(context, provider),
         ],
       ),
@@ -182,14 +184,15 @@ class NutritionScreen extends StatelessWidget {
   // ── TAB SEMANA ───────────────────────────────────────────────
 
   Widget _buildTabSemana(BuildContext context, HomeProvider provider) {
-    const diasNombre = [
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-      'Domingo'
+    final l10n = AppLocalizations.of(context)!;
+    final diasNombre = [
+      l10n.nutritionDayMon,
+      l10n.nutritionDayTue,
+      l10n.nutritionDayWed,
+      l10n.nutritionDayThu,
+      l10n.nutritionDayFri,
+      l10n.nutritionDaySat,
+      l10n.nutritionDaySun,
     ];
     final comidas = provider.planNutricion!.comidas;
     final hoyIdx = DateTime.now().weekday - 1;
@@ -230,18 +233,18 @@ class NutritionScreen extends StatelessWidget {
                 size: 48,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Lista de la compra',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.nutritionShopTitle,
+                style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Genera tu lista semanal automáticamente',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.nutritionShopEmpty,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
@@ -251,15 +254,15 @@ class NutritionScreen extends StatelessWidget {
               if (generando) ...[
                 const CircularProgressIndicator(color: AppColors.primary),
                 const SizedBox(height: 12),
-                const Text(
-                  'Analizando tu plan...',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.nutritionShopGenerating,
+                  style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 14),
                 ),
               ] else
                 ElevatedButton(
                   onPressed: () => provider.generarListaCompra(),
-                  child: const Text('Generar lista'),
+                  child: Text(AppLocalizations.of(context)!.nutritionShopGenerate),
                 ),
             ],
           ),
@@ -291,7 +294,7 @@ class NutritionScreen extends StatelessWidget {
           Row(
             children: [
               Text(
-                '$completados/${lista.length} artículos',
+                AppLocalizations.of(context)!.nutritionShopProgress(completados, lista.length),
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
@@ -308,7 +311,9 @@ class NutritionScreen extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  generando ? 'Generando...' : 'Regenerar',
+                  generando
+                      ? AppLocalizations.of(context)!.nutritionShopGenerating
+                      : AppLocalizations.of(context)!.nutritionRegenerate,
                   style: const TextStyle(fontSize: 13),
                 ),
               ),
@@ -360,7 +365,7 @@ class NutritionScreen extends StatelessWidget {
 
   // ── SHARED: MACROS SUMMARY ───────────────────────────────────
 
-  Widget _buildMacrosSummary(HomeProvider provider) {
+  Widget _buildMacrosSummary(BuildContext context, HomeProvider provider) {
     final plan = provider.planNutricion!;
     final consumidas = plan.caloriasConsumidas;
     final objetivo = plan.caloriasObjetivo;
@@ -380,9 +385,9 @@ class NutritionScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Calorías hoy',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.homeCaloriesToday,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -412,19 +417,19 @@ class NutritionScreen extends StatelessWidget {
             Row(
               children: [
                 _macroItem(
-                    'Proteínas',
+                    AppLocalizations.of(context)!.homeMacroProtein,
                     '${plan.proteinasConsumidas.round()}g',
                     '${plan.proteinasObjetivo.round()}g',
                     const Color(0xFF4FC3F7)),
                 const SizedBox(width: 12),
                 _macroItem(
-                    'Carbos',
+                    AppLocalizations.of(context)!.homeMacroCarbs,
                     '${(plan.comidas.where((m) => m.completada).fold(0.0, (s, m) => s + m.carbohidratos)).round()}g',
                     '${plan.carbosObjetivo.round()}g',
                     const Color(0xFFFFB74D)),
                 const SizedBox(width: 12),
                 _macroItem(
-                    'Grasas',
+                    AppLocalizations.of(context)!.homeMacroFat,
                     '${(plan.comidas.where((m) => m.completada).fold(0.0, (s, m) => s + m.grasas)).round()}g',
                     '${plan.grasasObjetivo.round()}g',
                     const Color(0xFFEF9A9A)),
@@ -490,13 +495,13 @@ class NutritionScreen extends StatelessWidget {
                     context.read<HomeProvider>().toggleComidaCompletada(meal),
                 onTap: () => showMealDetailSheet(context, meal),
               )),
-          _buildTotalesCard(provider),
+          _buildTotalesCard(context, provider),
         ],
       ),
     );
   }
 
-  Widget _buildTotalesCard(HomeProvider provider) {
+  Widget _buildTotalesCard(BuildContext context, HomeProvider provider) {
     final plan = provider.planNutricion!;
     final completadas = plan.comidas.where((m) => m.completada).toList();
     final protTotal = completadas.fold(0.0, (s, m) => s + m.proteinas);
@@ -514,9 +519,9 @@ class NutritionScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'TOTALES DEL DÍA',
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -526,13 +531,13 @@ class NutritionScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _totalMacro('Proteínas', '${protTotal.round()}g',
+              _totalMacro(AppLocalizations.of(context)!.homeMacroProtein, '${protTotal.round()}g',
                   plan.proteinasObjetivo, const Color(0xFF4FC3F7)),
               const SizedBox(width: 10),
-              _totalMacro('Carbos', '${carbTotal.round()}g',
+              _totalMacro(AppLocalizations.of(context)!.homeMacroCarbs, '${carbTotal.round()}g',
                   plan.carbosObjetivo, const Color(0xFFFFB74D)),
               const SizedBox(width: 10),
-              _totalMacro('Grasas', '${grasTotal.round()}g',
+              _totalMacro(AppLocalizations.of(context)!.homeMacroFat, '${grasTotal.round()}g',
                   plan.grasasObjetivo, const Color(0xFFEF9A9A)),
             ],
           ),
@@ -598,18 +603,18 @@ class NutritionScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Sin plan nutricional',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.nutritionEmptyTitle,
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Genera tu plan de alimentación personalizado con IA',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.nutritionEmptyDesc,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
             ),
@@ -621,7 +626,7 @@ class NutritionScreen extends StatelessWidget {
           else
             ElevatedButton(
               onPressed: () => provider.generarPlanNutricion(),
-              child: const Text('Generar plan nutricional'),
+              child: Text(AppLocalizations.of(context)!.nutritionGeneratePlan),
             ),
         ],
       ),
@@ -725,9 +730,9 @@ class _DayMealCardState extends State<_DayMealCard> {
                                 color: AppColors.primary.withAlpha(26),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
-                                'HOY',
-                                style: TextStyle(
+                              child: Text(
+                                AppLocalizations.of(context)!.nutritionToday,
+                                style: const TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,

@@ -9,6 +9,8 @@ import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/weight_log.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
+import 'package:fitcoach/core/providers/locale_provider.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -49,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildEstadisticasSection(provider),
                     _buildPesoSection(context, provider),
                   ],
-                  _buildLogoutButton(context),
+                  _buildSettingsSection(context),
                 ],
               ),
             ),
@@ -392,9 +394,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Header
           Row(
             children: [
-              const Text(
-                'EVOLUCIÓN DE PESO',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.profileWeightSection,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -404,14 +406,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Spacer(),
               GestureDetector(
                 onTap: () => _mostrarRegistrarPeso(context, provider),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add, color: AppColors.primary, size: 16),
-                    SizedBox(width: 2),
+                    const Icon(Icons.add, color: AppColors.primary, size: 16),
+                    const SizedBox(width: 2),
                     Text(
-                      'Registrar',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.profileWeightRegister,
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 12,
                       ),
@@ -449,9 +451,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Row(
                 children: [
-                  const Text(
-                    'Peso actual',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.profileWeightLastLabel,
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -516,7 +518,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           await provider.registrarPeso(peso, notas);
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Peso registrado')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.profileWeightModalTitle)),
             );
           }
         },
@@ -524,32 +526,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── LOGOUT ────────────────────────────────────────────────
+  // ── SETTINGS + LOGOUT ────────────────────────────────────
 
-  Widget _buildLogoutButton(BuildContext context) {
+  Widget _buildSettingsSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final localeProvider = context.watch<LocaleProvider>();
+    final isEs = localeProvider.locale.languageCode == 'es';
+
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: OutlinedButton(
-        onPressed: () async {
-          final authProvider = context.read<AuthProvider>();
-          await authProvider.logout();
-          if (context.mounted) {
-            context.go(AppConstants.routeLogin);
-          }
-        },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.error,
-          side: BorderSide(color: AppColors.error.withAlpha(100)),
-          minimumSize: const Size(double.infinity, 50),
-        ),
-        child: const Text(
-          'Cerrar sesión',
-          style: TextStyle(
-            color: AppColors.error,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.profileSectionSettings,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.backgroundCard,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  const Icon(Icons.language,
+                      color: AppColors.textSecondary, size: 16),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.profileLanguage,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  _LangToggle(
+                    isEs: isEs,
+                    onToggle: () => localeProvider.toggleLocale(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () async {
+              final authProvider = context.read<AuthProvider>();
+              await authProvider.logout();
+              if (context.mounted) {
+                context.go(AppConstants.routeLogin);
+              }
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: BorderSide(color: AppColors.error.withAlpha(100)),
+              minimumSize: const Size(double.infinity, 50),
+            ),
+            child: Text(
+              l10n.profileLogout,
+              style: const TextStyle(
+                color: AppColors.error,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
@@ -578,10 +631,10 @@ class _WeightChart extends StatelessWidget {
       ),
       clipBehavior: Clip.hardEdge,
       child: registros.length < 2
-          ? const Center(
+          ? Center(
               child: Text(
-                'Registra tu peso para ver tu evolución',
-                style: TextStyle(
+                AppLocalizations.of(context)!.profileWeightNoData,
+                style: const TextStyle(
                   color: Color(0xFF444444),
                   fontSize: 13,
                 ),
@@ -791,9 +844,9 @@ class _WeightRegModalState extends State<_WeightRegModal> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Registrar peso de hoy',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.profileWeightModalTitle,
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -839,8 +892,8 @@ class _WeightRegModalState extends State<_WeightRegModal> {
           TextField(
             controller: _notasCtrl,
             style: const TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(
-              hintText: '¿Cómo te encuentras hoy? (opcional)',
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.profileWeightNotesHint,
             ),
           ),
           const SizedBox(height: 20),
@@ -862,7 +915,7 @@ class _WeightRegModalState extends State<_WeightRegModal> {
                         color: AppColors.background,
                       ),
                     )
-                  : const Text('Guardar'),
+                  : Text(AppLocalizations.of(context)!.save),
             ),
           ),
         ],
@@ -881,6 +934,63 @@ class _WeightRegModalState extends State<_WeightRegModal> {
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: AppColors.textSecondary, size: 22),
+      ),
+    );
+  }
+}
+
+// ─── Language Toggle ──────────────────────────────────────────
+
+class _LangToggle extends StatelessWidget {
+  final bool isEs;
+  final VoidCallback onToggle;
+
+  const _LangToggle({required this.isEs, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        height: 30,
+        decoration: BoxDecoration(
+          color: AppColors.backgroundElevated,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _LangOption(label: 'ES', active: isEs),
+            _LangOption(label: 'EN', active: !isEs),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LangOption extends StatelessWidget {
+  final String label;
+  final bool active;
+
+  const _LangOption({required this.label, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      decoration: BoxDecoration(
+        color: active ? AppColors.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: active ? const Color(0xFF0D0D0D) : AppColors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

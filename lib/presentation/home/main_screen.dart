@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/presentation/home/home_screen.dart';
 import 'package:fitcoach/presentation/training/training_screen.dart';
 import 'package:fitcoach/presentation/nutrition/nutrition_screen.dart';
@@ -21,6 +22,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: IndexedStack(
@@ -48,26 +50,26 @@ class _MainScreenState extends State<MainScreen> {
           selectedFontSize: 11,
           unselectedFontSize: 11,
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Inicio',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: l10n.navHome,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.fitness_center_outlined),
-              activeIcon: Icon(Icons.fitness_center),
-              label: 'Entreno',
+              icon: const Icon(Icons.fitness_center_outlined),
+              activeIcon: const Icon(Icons.fitness_center),
+              label: l10n.navTraining,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_outlined),
-              activeIcon: Icon(Icons.restaurant),
-              label: 'Nutrición',
+              icon: const Icon(Icons.restaurant_outlined),
+              activeIcon: const Icon(Icons.restaurant),
+              label: l10n.navNutrition,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
-              label: 'Chat',
+              icon: const Icon(Icons.chat_bubble_outline),
+              activeIcon: const Icon(Icons.chat_bubble),
+              label: l10n.navChat,
             ),
           ],
         ),

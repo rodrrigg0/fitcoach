@@ -5,6 +5,7 @@ import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/services/training_provider.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 
 class SessionDetailScreen extends StatelessWidget {
   final WorkoutDay workout;
@@ -33,12 +34,12 @@ class SessionDetailScreen extends StatelessWidget {
                   children: [
                     _buildInfoRow(),
                     const SizedBox(height: 24),
-                    _buildSection('Por qué hoy', workout.porQueHoy),
+                    _buildSection(AppLocalizations.of(context)!.sessionWhyToday, workout.porQueHoy),
                     const SizedBox(height: 20),
-                    _buildObjectivos(),
+                    _buildObjectivos(context),
                     const SizedBox(height: 20),
                     if (workout.ejercicios.isNotEmpty) ...[
-                      _buildEjercicios(),
+                      _buildEjercicios(context),
                       const SizedBox(height: 20),
                     ],
                     _buildConsejo(),
@@ -174,13 +175,13 @@ class SessionDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildObjectivos() {
+  Widget _buildObjectivos(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'OBJETIVOS',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.sessionObjectives,
+          style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -216,13 +217,13 @@ class SessionDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEjercicios() {
+  Widget _buildEjercicios(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'EJERCICIOS',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.sessionExercises,
+          style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -351,7 +352,7 @@ class SessionDetailScreen extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(double.infinity, 50),
       ),
-      child: const Text('Iniciar sesión'),
+      child: Text(AppLocalizations.of(context)!.sessionStartButton),
     );
   }
 

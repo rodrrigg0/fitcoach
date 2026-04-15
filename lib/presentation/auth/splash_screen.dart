@@ -6,6 +6,7 @@ import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -86,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                'Tu entrenador personal con IA',
+                AppLocalizations.of(context)!.appTagline,
                 style: TextStyle(
                   fontSize: 15,
                   color: Colors.white.withValues(alpha: 0.5),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/number_picker_wheel.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -39,9 +40,9 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildMetricsGrid(context, provider),
                   const SizedBox(height: 16),
-                  _buildRachaSemanal(provider),
+                  _buildRachaSemanal(context, provider),
                   const SizedBox(height: 16),
-                  _buildMacros(provider),
+                  _buildMacros(context, provider),
                   const SizedBox(height: 16),
                   _buildChatAccess(context, provider),
                   const SizedBox(height: 24),
@@ -78,7 +79,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'Hola, $nombre',
+              AppLocalizations.of(context)!.homeHello(nombre),
               style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 22,
@@ -101,7 +102,7 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '🔥 $racha días',
+                  AppLocalizations.of(context)!.homeStreak(racha),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 11,
@@ -183,18 +184,18 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Sin plan activo',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.homeNoPlanActive,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Genera tu plan de entrenamiento personalizado con IA',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.homeGeneratePlanDesc,
+              style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -203,7 +204,7 @@ class HomeScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 44),
               ),
-              child: const Text('Generar mi plan'),
+              child: Text(AppLocalizations.of(context)!.homeGeneratePlan),
             ),
           ],
         ),
@@ -212,7 +213,7 @@ class HomeScreen extends StatelessWidget {
 
     final dia = provider.diaHoy;
     final esDescanso = dia.esDescanso;
-    final categoria = _labelCategoria(dia.tipo);
+    final categoria = _labelCategoria(context, dia.tipo);
 
     return _heroCardShell(
       child: Column(
@@ -228,7 +229,7 @@ class HomeScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              'HOY · $categoria',
+              AppLocalizations.of(context)!.homeHeroTag(categoria),
               style: TextStyle(
                 color: esDescanso
                     ? AppColors.textSecondary
@@ -251,7 +252,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             esDescanso
-                ? 'El descanso es parte del entrenamiento'
+                ? AppLocalizations.of(context)!.homeRestMessage
                 : '${dia.duracion} min · ${dia.lugar}',
             style: const TextStyle(
                 color: AppColors.textSecondary, fontSize: 12),
@@ -305,9 +306,12 @@ class HomeScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      const diasNombre = [
-                        'Lunes', 'Martes', 'Miércoles', 'Jueves',
-                        'Viernes', 'Sábado', 'Domingo',
+                      final l10n = AppLocalizations.of(context)!;
+                      final diasNombre = [
+                        l10n.nutritionDayMon, l10n.nutritionDayTue,
+                        l10n.nutritionDayWed, l10n.nutritionDayThu,
+                        l10n.nutritionDayFri, l10n.nutritionDaySat,
+                        l10n.nutritionDaySun,
                       ];
                       context.push(
                         AppConstants.routeSessionDetail,
@@ -321,15 +325,15 @@ class HomeScreen extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(0, 42),
                     ),
-                    child: const Text('Iniciar sesión'),
+                    child: Text(AppLocalizations.of(context)!.homeStartSession),
                   ),
                 ),
                 const SizedBox(width: 14),
                 GestureDetector(
                   onTap: () => onTabChange?.call(1),
-                  child: const Text(
-                    'Ver plan completo',
-                    style: TextStyle(
+                  child: Text(
+                    AppLocalizations.of(context)!.homeViewFullPlan,
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -357,14 +361,15 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  String _labelCategoria(String tipo) {
+  String _labelCategoria(BuildContext context, String tipo) {
+    final l10n = AppLocalizations.of(context)!;
     switch (tipo) {
       case 'gimnasio':
-        return 'GIMNASIO';
+        return l10n.trainingTypeGym;
       case 'deporte':
-        return 'DEPORTE';
+        return l10n.trainingTypeSport;
       default:
-        return 'DESCANSO';
+        return l10n.trainingTypeRest;
     }
   }
 
@@ -376,9 +381,9 @@ class HomeScreen extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              _metricCalorias(provider),
+              _metricCalorias(context, provider),
               const SizedBox(height: 8),
-              _metricPeso(provider),
+              _metricPeso(context, provider),
             ],
           ),
         ),
@@ -386,7 +391,7 @@ class HomeScreen extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              _metricProximaComida(provider),
+              _metricProximaComida(context, provider),
               const SizedBox(height: 8),
               _metricSueno(context, provider),
             ],
@@ -409,7 +414,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _metricCalorias(HomeProvider provider) {
+  Widget _metricCalorias(BuildContext context, HomeProvider provider) {
     final consumidas = provider.caloriasConsumidas;
     final objetivo = provider.caloriasObjetivo;
     final pct = provider.porcentajeCalorias;
@@ -418,9 +423,9 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Calorías hoy',
+          Text(AppLocalizations.of(context)!.homeCaloriesToday,
               style:
-                  TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
           const SizedBox(height: 6),
           Text(
             '$consumidas kcal',
@@ -443,7 +448,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '$consumidas de $objetivo kcal',
+            AppLocalizations.of(context)!.homeCaloriesOf(consumidas, objetivo),
             style: const TextStyle(
                 color: AppColors.textSecondary, fontSize: 10),
           ),
@@ -452,7 +457,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _metricProximaComida(HomeProvider provider) {
+  Widget _metricProximaComida(BuildContext context, HomeProvider provider) {
     final proxima = provider.proximaComida;
     final todasCompletadas = provider.comidasHoy.isNotEmpty &&
         provider.comidasHoy.every((m) => m.completada);
@@ -461,14 +466,14 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Próxima comida',
+          Text(AppLocalizations.of(context)!.homeNextMeal,
               style:
-                  TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
           const SizedBox(height: 6),
           if (todasCompletadas)
-            const Text(
-              'Plan completado',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.homePlanCompleted,
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -492,9 +497,9 @@ class HomeScreen extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ] else
-            const Text(
-              'Sin plan',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.homeNoPlan,
+              style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 15),
             ),
         ],
@@ -502,16 +507,16 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _metricPeso(HomeProvider provider) {
+  Widget _metricPeso(BuildContext context, HomeProvider provider) {
     final peso = provider.perfil?.peso ?? 0.0;
 
     return _metricCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Peso actual',
+          Text(AppLocalizations.of(context)!.homeCurrentWeight,
               style:
-                  TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
           const SizedBox(height: 6),
           Text(
             '$peso kg',
@@ -522,9 +527,9 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          const Text(
-            'desde el perfil',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+          Text(
+            AppLocalizations.of(context)!.homeWeightFromProfile,
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
           ),
         ],
       ),
@@ -544,7 +549,9 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              registrado ? 'Sueño anoche' : '¿Cuánto dormiste?',
+              registrado
+                  ? AppLocalizations.of(context)!.homeSleepLabel
+                  : AppLocalizations.of(context)!.homeSleepQuestion,
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 11),
             ),
@@ -570,9 +577,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ] else
-              const Text(
-                'Registrar',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.homeSleepRegister,
+                style: const TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -607,9 +614,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Horas de sueño',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.homeSleepHours,
+                style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
@@ -635,7 +642,7 @@ class HomeScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                 ),
-                child: const Text('Guardar'),
+                child: Text(AppLocalizations.of(context)!.save),
               ),
             ],
           ),
@@ -646,7 +653,7 @@ class HomeScreen extends StatelessWidget {
 
   // ─── RACHA SEMANAL ─────────────────────────────────────────
 
-  Widget _buildRachaSemanal(HomeProvider provider) {
+  Widget _buildRachaSemanal(BuildContext context, HomeProvider provider) {
     final completados = provider.completadosPorDia;
     final hoyIdx = DateTime.now().weekday - 1;
     const letras = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -668,9 +675,9 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'SEMANA ACTUAL',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.homeWeekLabel,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -746,7 +753,7 @@ class HomeScreen extends StatelessWidget {
 
   // ─── MACROS DEL DÍA ────────────────────────────────────────
 
-  Widget _buildMacros(HomeProvider provider) {
+  Widget _buildMacros(BuildContext context, HomeProvider provider) {
     final plan = provider.planNutricion;
     if (plan == null) return const SizedBox.shrink();
 
@@ -774,9 +781,9 @@ class HomeScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
-                'MACROS DE HOY',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.homeMacrosLabel,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -798,7 +805,7 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               _macroColumn(
-                label: 'Proteína',
+                label: AppLocalizations.of(context)!.homeMacroProtein,
                 valor: '${protConsumidas.round()}g',
                 progreso: plan.proteinasObjetivo > 0
                     ? (protConsumidas / plan.proteinasObjetivo)
@@ -808,7 +815,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               _macroColumn(
-                label: 'Carbos',
+                label: AppLocalizations.of(context)!.homeMacroCarbs,
                 valor: '${carbConsumidos.round()}g',
                 progreso: plan.carbosObjetivo > 0
                     ? (carbConsumidos / plan.carbosObjetivo)
@@ -818,7 +825,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               _macroColumn(
-                label: 'Grasas',
+                label: AppLocalizations.of(context)!.homeMacroFat,
                 valor: '${grasConsumidas.round()}g',
                 progreso: plan.grasasObjetivo > 0
                     ? (grasConsumidas / plan.grasasObjetivo)
@@ -877,18 +884,19 @@ class HomeScreen extends StatelessWidget {
   // ─── ACCESO RÁPIDO CHAT ─────────────────────────────────────
 
   Widget _buildChatAccess(BuildContext context, HomeProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
     final dia = provider.planEntrenamiento != null ? provider.diaHoy : null;
     final String pregunta;
 
     if (dia == null) {
-      pregunta = '¿Tienes alguna duda sobre tu plan?';
+      pregunta = l10n.homeNoPlanQuestion;
     } else if (dia.esDescanso) {
-      pregunta = '¿Cómo te has recuperado hoy?';
+      pregunta = l10n.homeRestQuestion;
     } else {
       final deporte = provider.perfil?.deportes.isNotEmpty == true
           ? provider.perfil!.deportes.first
           : dia.tipo;
-      pregunta = '¿Listo para tu sesión de $deporte?';
+      pregunta = l10n.homeReadyQuestion(deporte);
     }
 
     return GestureDetector(
@@ -926,9 +934,9 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Entrenador FitCoach',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.homeCoach,
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 
 class ProfileLoadingScreen extends StatefulWidget {
   final UserProfile profile;
@@ -174,7 +175,7 @@ class _ProfileLoadingScreenState extends State<ProfileLoadingScreen>
                           key: const ValueKey('phase3'),
                           children: [
                             Text(
-                              '¡Listo, ${profile.nombre}!',
+                              AppLocalizations.of(context)!.onboardingLoadingDone(profile.nombre),
                               style: const TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 26,
@@ -183,9 +184,9 @@ class _ProfileLoadingScreenState extends State<ProfileLoadingScreen>
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Tu plan está preparado',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.onboardingLoadingPlanReady,
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 14,
                               ),
@@ -195,8 +196,8 @@ class _ProfileLoadingScreenState extends State<ProfileLoadingScreen>
                       : Text(
                           key: ValueKey('phase${_phase}txt'),
                           _phase == 0
-                              ? 'Analizando tu perfil...'
-                              : 'Creando tu plan personalizado...',
+                              ? AppLocalizations.of(context)!.onboardingLoadingPhase0
+                              : AppLocalizations.of(context)!.onboardingLoadingPhase1,
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 14,

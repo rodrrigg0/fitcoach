@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -37,30 +38,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'Ingresa tu correo';
+    final l10n = AppLocalizations.of(context)!;
+    if (value == null || value.isEmpty) return l10n.validateEmail;
     final regex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!regex.hasMatch(value)) return 'Formato de correo no válido';
+    if (!regex.hasMatch(value)) return l10n.validateEmailFormat;
     return null;
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Ingresa tu contraseña';
-    if (value.length < 8) return 'Mínimo 8 caracteres';
+    final l10n = AppLocalizations.of(context)!;
+    if (value == null || value.isEmpty) return l10n.validatePassword;
+    if (value.length < 8) return l10n.validatePasswordLength;
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) return 'Confirma tu contraseña';
-    if (value != _passwordController.text) return 'Las contraseñas no coinciden';
+    final l10n = AppLocalizations.of(context)!;
+    if (value == null || value.isEmpty) return l10n.validateConfirmPassword;
+    if (value != _passwordController.text) return l10n.validatePasswordMismatch;
     return null;
   }
 
   String? _validateName(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Ingresa tu nombre';
+    final l10n = AppLocalizations.of(context)!;
+    if (value == null || value.trim().isEmpty) return l10n.validateName;
     return null;
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _nameChanged = true;
       _emailChanged = true;
@@ -80,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Error al crear la cuenta'),
+          content: Text(authProvider.error ?? l10n.registerError),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -94,6 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -116,18 +123,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   constraints: const BoxConstraints(),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Crear cuenta',
-                  style: TextStyle(
+                Text(
+                  l10n.registerTitle,
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Empieza tu transformación hoy',
-                  style: TextStyle(
+                Text(
+                  l10n.registerSubtitle,
+                  style: const TextStyle(
                     fontSize: 15,
                     color: AppColors.textSecondary,
                   ),
@@ -138,9 +145,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: const TextStyle(color: AppColors.textPrimary),
                   onChanged: (_) => setState(() => _nameChanged = true),
                   validator: _nameChanged ? _validateName : null,
-                  decoration: const InputDecoration(
-                    hintText: 'Nombre completo',
-                    prefixIcon: Icon(Icons.person_outline,
+                  decoration: InputDecoration(
+                    hintText: l10n.registerNameHint,
+                    prefixIcon: const Icon(Icons.person_outline,
                         color: AppColors.textSecondary),
                   ),
                 ),
@@ -151,9 +158,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: const TextStyle(color: AppColors.textPrimary),
                   onChanged: (_) => setState(() => _emailChanged = true),
                   validator: _emailChanged ? _validateEmail : null,
-                  decoration: const InputDecoration(
-                    hintText: 'Correo electrónico',
-                    prefixIcon: Icon(Icons.email_outlined,
+                  decoration: InputDecoration(
+                    hintText: l10n.loginEmailHint,
+                    prefixIcon: const Icon(Icons.email_outlined,
                         color: AppColors.textSecondary),
                   ),
                 ),
@@ -165,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onChanged: (_) => setState(() => _passwordChanged = true),
                   validator: _passwordChanged ? _validatePassword : null,
                   decoration: InputDecoration(
-                    hintText: 'Contraseña',
+                    hintText: l10n.loginPasswordHint,
                     prefixIcon: const Icon(Icons.lock_outline,
                         color: AppColors.textSecondary),
                     suffixIcon: IconButton(
@@ -188,7 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onChanged: (_) => setState(() => _confirmChanged = true),
                   validator: _confirmChanged ? _validateConfirmPassword : null,
                   decoration: InputDecoration(
-                    hintText: 'Confirmar contraseña',
+                    hintText: l10n.registerConfirmPasswordHint,
                     prefixIcon: const Icon(Icons.lock_outline,
                         color: AppColors.textSecondary),
                     suffixIcon: IconButton(
@@ -216,23 +223,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               color: AppColors.background,
                             ),
                           )
-                        : const Text('Crear cuenta'),
+                        : Text(l10n.registerButton),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Center(
                   child: RichText(
                     textAlign: TextAlign.center,
-                    text: const TextSpan(
-                      style: TextStyle(
+                    text: TextSpan(
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                       ),
                       children: [
-                        TextSpan(text: 'Al registrarte aceptas nuestros\n'),
+                        TextSpan(text: l10n.registerTerms),
                         TextSpan(
-                          text: 'Términos y condiciones',
-                          style: TextStyle(color: AppColors.primary),
+                          text: l10n.registerTermsLink,
+                          style: const TextStyle(color: AppColors.primary),
                         ),
                       ],
                     ),

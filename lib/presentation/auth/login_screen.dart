@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    final l10n = AppLocalizations.of(context)!;
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
       _emailController.text.trim(),
@@ -36,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Error al iniciar sesión'),
+          content: Text(authProvider.error ?? l10n.loginError),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -55,30 +57,31 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _mostrarDialogoRecuperacion() {
+    final l10n = AppLocalizations.of(context)!;
     final emailCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.backgroundCard,
-        title: const Text(
-          'Recuperar contraseña',
-          style: TextStyle(color: AppColors.textPrimary),
+        title: Text(
+          l10n.loginRecoverTitle,
+          style: const TextStyle(color: AppColors.textPrimary),
         ),
         content: TextField(
           controller: emailCtrl,
           keyboardType: TextInputType.emailAddress,
           style: const TextStyle(color: AppColors.textPrimary),
-          decoration: const InputDecoration(
-            hintText: 'Correo electrónico',
+          decoration: InputDecoration(
+            hintText: l10n.loginEmailHint,
             prefixIcon:
-                Icon(Icons.email_outlined, color: AppColors.textSecondary),
+                const Icon(Icons.email_outlined, color: AppColors.textSecondary),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(l10n.cancel,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () async {
@@ -91,25 +94,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     .recuperarContrasena(email);
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('Email de recuperación enviado. Revisa tu bandeja.'),
+                  SnackBar(
+                    content: Text(l10n.loginRecoverSent),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               } catch (_) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('No se pudo enviar el email de recuperación'),
+                  SnackBar(
+                    content: Text(l10n.loginRecoverError),
                     backgroundColor: AppColors.error,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
             },
-            child: const Text('Enviar',
-                style: TextStyle(color: AppColors.primary)),
+            child: Text(l10n.send,
+                style: const TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -118,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -127,18 +130,18 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.10),
-              const Text(
-                'Bienvenido',
-                style: TextStyle(
+              Text(
+                l10n.loginTitle,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Inicia sesión para continuar',
-                style: TextStyle(
+              Text(
+                l10n.loginSubtitle,
+                style: const TextStyle(
                   fontSize: 15,
                   color: AppColors.textSecondary,
                 ),
@@ -148,9 +151,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'Correo electrónico',
-                  prefixIcon: Icon(Icons.email_outlined,
+                decoration: InputDecoration(
+                  hintText: l10n.loginEmailHint,
+                  prefixIcon: const Icon(Icons.email_outlined,
                       color: AppColors.textSecondary),
                 ),
               ),
@@ -160,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: _obscurePassword,
                 style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Contraseña',
+                  hintText: l10n.loginPasswordHint,
                   prefixIcon: const Icon(Icons.lock_outline,
                       color: AppColors.textSecondary),
                   suffixIcon: IconButton(
@@ -188,24 +191,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: AppColors.background,
                           ),
                         )
-                      : const Text('Iniciar sesión'),
+                      : Text(l10n.loginButton),
                 ),
               ),
               const SizedBox(height: 24),
               Row(
-                children: const [
-                  Expanded(
+                children: [
+                  const Expanded(
                     child: Divider(color: AppColors.border, thickness: 1),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      'o',
-                      style: TextStyle(
+                      l10n.or,
+                      style: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 14),
                     ),
                   ),
-                  Expanded(
+                  const Expanded(
                     child: Divider(color: AppColors.border, thickness: 1),
                   ),
                 ],
@@ -213,15 +216,15 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               OutlinedButton(
                 onPressed: () => context.push(AppConstants.routeRegister),
-                child: const Text('Crear cuenta nueva'),
+                child: Text(l10n.loginCreateAccount),
               ),
               const SizedBox(height: 32),
               Center(
                 child: GestureDetector(
                   onTap: _mostrarDialogoRecuperacion,
-                  child: const Text(
-                    '¿Olvidaste tu contraseña?',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.loginForgotPassword,
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 14,
                     ),

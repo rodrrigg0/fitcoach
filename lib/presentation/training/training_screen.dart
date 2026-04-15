@@ -7,6 +7,7 @@ import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/data/services/training_provider.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/exercise_log.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 
 class TrainingScreen extends StatelessWidget {
   const TrainingScreen({super.key});
@@ -56,10 +57,10 @@ class TrainingScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Entrenamiento',
-              style: TextStyle(
+              AppLocalizations.of(context)!.trainingTitle,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -87,15 +88,15 @@ class TrainingScreen extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.refresh,
+                          const Icon(Icons.refresh,
                               color: AppColors.textSecondary, size: 16),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            'Regenerar',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.trainingRegenerate,
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -130,9 +131,9 @@ class TrainingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Tu plan está siendo preparado',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.trainingEmptyTitle,
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -140,9 +141,9 @@ class TrainingScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Genera tu primer plan de entrenamiento\npersonalizado con IA',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.trainingEmptyDesc,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
               height: 1.4,
@@ -151,13 +152,13 @@ class TrainingScreen extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           if (provider.cargandoPlan)
-            const Column(
+            Column(
               children: [
-                CircularProgressIndicator(color: AppColors.primary),
-                SizedBox(height: 12),
+                const CircularProgressIndicator(color: AppColors.primary),
+                const SizedBox(height: 12),
                 Text(
-                  'Generando plan con IA...',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.homeGeneratingAI,
+                  style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 13),
                 ),
               ],
@@ -165,7 +166,7 @@ class TrainingScreen extends StatelessWidget {
           else
             ElevatedButton(
               onPressed: () => provider.generarPlanEntrenamiento(),
-              child: const Text('Generar mi plan'),
+              child: Text(AppLocalizations.of(context)!.trainingGeneratePlan),
             ),
         ],
       ),
@@ -175,9 +176,11 @@ class TrainingScreen extends StatelessWidget {
   Widget _buildPlanContent(BuildContext context, HomeProvider provider) {
     final plan = provider.planEntrenamiento!;
     final hoyIdx = DateTime.now().weekday - 1;
-    const diasNombre = [
-      'Lunes', 'Martes', 'Miércoles', 'Jueves',
-      'Viernes', 'Sábado', 'Domingo',
+    final l10n = AppLocalizations.of(context)!;
+    final diasNombre = [
+      l10n.nutritionDayMon, l10n.nutritionDayTue, l10n.nutritionDayWed,
+      l10n.nutritionDayThu, l10n.nutritionDayFri, l10n.nutritionDaySat,
+      l10n.nutritionDaySun,
     ];
 
     return Padding(
@@ -206,7 +209,7 @@ class TrainingScreen extends StatelessWidget {
                   context.read<HomeProvider>().toggleEntrenamientoCompletado(),
             );
           }),
-          _buildNotaDistribucion(plan.notaDistribucion),
+          _buildNotaDistribucion(context, plan.notaDistribucion),
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: OutlinedButton(
@@ -217,9 +220,9 @@ class TrainingScreen extends StatelessWidget {
                 side: const BorderSide(color: AppColors.border),
                 minimumSize: const Size(double.infinity, 48),
               ),
-              child: const Text(
-                'Generar nuevo plan',
-                style: TextStyle(color: AppColors.textSecondary),
+              child: Text(
+                AppLocalizations.of(context)!.trainingNewPlan,
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ),
           ),
@@ -245,11 +248,11 @@ class TrainingScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
           child: Text(
-            'SESIONES ANTERIORES',
-            style: TextStyle(
+            AppLocalizations.of(context)!.trainingPreviousSessions,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -297,7 +300,7 @@ class TrainingScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '${sesion.ejercicios.length} ejercicios',
+                          AppLocalizations.of(context)!.trainingExercises(sesion.ejercicios.length),
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 11,
@@ -328,9 +331,9 @@ class TrainingScreen extends StatelessWidget {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
-              'Ver todo el historial',
-              style: TextStyle(
+            child: Text(
+              AppLocalizations.of(context)!.trainingViewHistory,
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontSize: 13,
               ),
@@ -467,9 +470,9 @@ class TrainingScreen extends StatelessWidget {
                                 .toList(),
                           ),
                         ] else
-                          const Text(
-                            'Sin series registradas',
-                            style: TextStyle(
+                          Text(
+                            AppLocalizations.of(context)!.trainingNoSeries,
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
                             ),
@@ -513,11 +516,11 @@ class TrainingScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'HISTORIAL COMPLETO',
-                style: TextStyle(
+                AppLocalizations.of(context)!.trainingFullHistory,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -614,7 +617,7 @@ class TrainingScreen extends StatelessWidget {
           ? p.toInt().toString()
           : p.toStringAsFixed(1);
 
-  Widget _buildNotaDistribucion(String nota) {
+  Widget _buildNotaDistribucion(BuildContext context, String nota) {
     if (nota.isEmpty) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(top: 4, bottom: 16),
@@ -640,9 +643,9 @@ class TrainingScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'POR QUÉ ESTA DISTRIBUCIÓN',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.trainingWhyTitle,
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -746,7 +749,7 @@ class _WorkoutDayCard extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    _labelTipo(workout.tipo),
+                                    _labelTipo(context, workout.tipo),
                                     style: TextStyle(
                                       color: accentColor,
                                       fontSize: 9,
@@ -842,14 +845,15 @@ class _WorkoutDayCard extends StatelessWidget {
     );
   }
 
-  String _labelTipo(String tipo) {
+  String _labelTipo(BuildContext context, String tipo) {
+    final l10n = AppLocalizations.of(context)!;
     switch (tipo) {
       case 'gimnasio':
-        return 'GIMNASIO';
+        return l10n.trainingTypeGym;
       case 'deporte':
-        return 'DEPORTE';
+        return l10n.trainingTypeSport;
       default:
-        return 'DESCANSO';
+        return l10n.trainingTypeRest;
     }
   }
 }

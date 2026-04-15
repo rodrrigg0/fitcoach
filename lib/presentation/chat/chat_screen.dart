@@ -4,6 +4,7 @@ import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/services/chat_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/l10n/app_localizations.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -118,18 +119,18 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              '¿En qué puedo',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.chatWelcomeLine1,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 32,
                 fontWeight: FontWeight.w300,
               ),
               textAlign: TextAlign.center,
             ),
-            const Text(
-              'ayudarte hoy?',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.chatWelcomeLine2,
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
@@ -139,8 +140,8 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(height: 8),
             Text(
               nombre.isNotEmpty
-                  ? 'Hola $nombre, soy tu entrenador personal'
-                  : 'Hola, soy tu entrenador personal',
+                  ? AppLocalizations.of(context)!.chatWelcomeGreeting(nombre)
+                  : AppLocalizations.of(context)!.chatWelcomeGreetingAnon,
               style: const TextStyle(
                 color: Color(0xFF888888),
                 fontSize: 14,
@@ -296,8 +297,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 maxLines: 4,
                 minLines: 1,
                 textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  hintText: 'Escribe tu pregunta...',
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.chatInputHint,
                   hintStyle:
                       TextStyle(color: Color(0xFF444444), fontSize: 14),
                   border: InputBorder.none,
