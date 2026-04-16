@@ -20,6 +20,7 @@ import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/models/exercise_log.dart';
 import 'package:fitcoach/data/models/weight_log.dart';
+import 'package:fitcoach/data/models/progress_photo.dart';
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
@@ -214,6 +215,38 @@ class FirestoreService {
     return snapshot.docs
         .map((d) => WeightLog.fromJson(d.data()))
         .toList();
+  }
+
+  // ─── Fotos de progreso ─────────────────────────────────────────
+
+  Future<void> guardarFotoProgreso(String uid, ProgressPhoto foto) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('progress_photos')
+        .doc(foto.id)
+        .set(foto.toJson());
+  }
+
+  Future<List<ProgressPhoto>> cargarFotosProgreso(String uid) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('progress_photos')
+        .orderBy('fecha', descending: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => ProgressPhoto.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<void> eliminarFotoProgreso(String uid, String fotoId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('progress_photos')
+        .doc(fotoId)
+        .delete();
   }
 
   // ─── Historial chat ─────────────────────────────────────────

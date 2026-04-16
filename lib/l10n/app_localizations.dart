@@ -889,6 +889,126 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tu plan está preparado'**
   String get onboardingLoadingPlanReady;
+
+  /// Progress photos section label
+  ///
+  /// In es, this message translates to:
+  /// **'FOTOS DE PROGRESO'**
+  String get profilePhotosSection;
+
+  /// Add photo button
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get profilePhotosAdd;
+
+  /// Empty photos state message
+  ///
+  /// In es, this message translates to:
+  /// **'Añade tu primera foto\npara ver tu evolución'**
+  String get profilePhotosEmpty;
+
+  /// Compare photos button
+  ///
+  /// In es, this message translates to:
+  /// **'Comparar'**
+  String get profilePhotosCompare;
+
+  /// Camera source option
+  ///
+  /// In es, this message translates to:
+  /// **'Cámara'**
+  String get profilePhotosCamera;
+
+  /// Gallery source option
+  ///
+  /// In es, this message translates to:
+  /// **'Galería'**
+  String get profilePhotosGallery;
+
+  /// Photo notes field hint
+  ///
+  /// In es, this message translates to:
+  /// **'Notas (opcional)'**
+  String get profilePhotosNotesHint;
+
+  /// Photo weight field hint
+  ///
+  /// In es, this message translates to:
+  /// **'Peso en esta foto, ej: 75.5'**
+  String get profilePhotosWeightHint;
+
+  /// Upload photo button
+  ///
+  /// In es, this message translates to:
+  /// **'Subir foto'**
+  String get profilePhotosUploadButton;
+
+  /// Uploading state label
+  ///
+  /// In es, this message translates to:
+  /// **'Subiendo...'**
+  String get profilePhotosUploading;
+
+  /// Delete photo confirmation title
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar esta foto?'**
+  String get profilePhotosDeleteConfirm;
+
+  /// Delete photo confirmation message
+  ///
+  /// In es, this message translates to:
+  /// **'Esta acción no se puede deshacer'**
+  String get profilePhotosDeleteMessage;
+
+  /// Delete button
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get profilePhotosDelete;
+
+  /// Comparison sheet title
+  ///
+  /// In es, this message translates to:
+  /// **'Comparativa de progreso'**
+  String get profilePhotosCompareTitle;
+
+  /// First photo label in comparison
+  ///
+  /// In es, this message translates to:
+  /// **'Inicio'**
+  String get profilePhotosFirst;
+
+  /// Latest photo label in comparison
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora'**
+  String get profilePhotosLatest;
+
+  /// Photo saved snackbar message
+  ///
+  /// In es, this message translates to:
+  /// **'Foto guardada'**
+  String get profilePhotosSaved;
+
+  /// Photo deleted snackbar message
+  ///
+  /// In es, this message translates to:
+  /// **'Foto eliminada'**
+  String get profilePhotosDeleted;
+
+  /// Upload error snackbar message
+  ///
+  /// In es, this message translates to:
+  /// **'Error al subir la foto'**
+  String get profilePhotosErrorUpload;
+
+  /// Weight delta in comparison
+  ///
+  /// In es, this message translates to:
+  /// **'{delta} kg de diferencia'**
+  String profilePhotosWeightDelta(String delta);
 }
 
 class _AppLocalizationsDelegate

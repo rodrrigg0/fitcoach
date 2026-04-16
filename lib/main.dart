@@ -9,6 +9,7 @@ import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/providers/locale_provider.dart';
 import 'package:fitcoach/data/services/auth_service.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
+import 'package:fitcoach/data/services/storage_service.dart';
 import 'package:fitcoach/firebase_options.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 import 'package:fitcoach/data/services/onboarding_provider.dart';
@@ -47,6 +48,7 @@ class FitCoachApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: localeProvider),
         Provider(create: (_) => AuthService()),
         Provider(create: (_) => FirestoreService()),
+        Provider(create: (_) => StorageService()),
         ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),

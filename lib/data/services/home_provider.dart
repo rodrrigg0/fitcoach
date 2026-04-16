@@ -9,8 +9,11 @@ import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/models/shopping_item.dart';
 import 'package:fitcoach/data/models/weight_log.dart';
+import 'package:fitcoach/data/models/progress_photo.dart';
 import 'package:fitcoach/data/services/ai_service.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
+import 'package:fitcoach/data/services/storage_service.dart';
+import 'package:uuid/uuid.dart';
 
 class HomeProvider extends ChangeNotifier {
   static const _keyPerfil = 'user_profile';
@@ -23,6 +26,8 @@ class HomeProvider extends ChangeNotifier {
 
   final AIService _ai = AIService();
   final FirestoreService _firestoreService = FirestoreService();
+  final StorageService _storageService = StorageService();
+  static const _uuid = Uuid();
 
   UserProfile? _perfil;
   WorkoutPlan? _planEntrenamiento;
@@ -38,6 +43,8 @@ class HomeProvider extends ChangeNotifier {
   bool _generandoLista = false;
   List<WeightLog> _registrosPeso = [];
   bool _cargandoPesos = false;
+  List<ProgressPhoto> _fotosProgreso = [];
+  bool _subiendoFoto = false;
 
   UserProfile? get perfil => _perfil;
   WorkoutPlan? get planEntrenamiento => _planEntrenamiento;
@@ -52,6 +59,8 @@ class HomeProvider extends ChangeNotifier {
   bool get generandoLista => _generandoLista;
   List<WeightLog> get registrosPeso => _registrosPeso;
   bool get cargandoPesos => _cargandoPesos;
+  List<ProgressPhoto> get fotosProgreso => _fotosProgreso;
+  bool get subiendoFoto => _subiendoFoto;
 
   WorkoutDay? get entrenamientoHoy {
     if (_planEntrenamiento == null) return null;
@@ -511,6 +520,64 @@ class HomeProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('HomeProvider: error guardando peso: $e');
+    }
+  }
+
+  // ─── Fotos de progreso ────────────────────────────────────────
+
+  Future<void> cargarFotos() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      _fotosProgreso = await _firestoreService
+          .cargarFotosProgreso(uid)
+          .timeout(const Duration(seconds: 8));
+      notifyListeners();
+    } catch (e) {
+      debugPrint('HomeProvider: error cargando fotos: $e');
+    }
+  }
+
+  Future<bool> subirFoto({
+    required String rutaLocal,
+    String? notas,
+    double? peso,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || _subiendoFoto) return false;
+    _subiendoFoto = true;
+    notifyListeners();
+    try {
+      final url = await _storageService.subirFotoProgreso(uid, rutaLocal);
+      final foto = ProgressPhoto(
+        id: _uuid.v4(),
+        fecha: DateTime.now(),
+        url: url,
+        notas: notas?.trim().isEmpty == true ? null : notas?.trim(),
+        peso: peso,
+      );
+      await _firestoreService.guardarFotoProgreso(uid, foto);
+      _fotosProgreso = [foto, ..._fotosProgreso];
+      return true;
+    } catch (e) {
+      debugPrint('HomeProvider: error subiendo foto: $e');
+      return false;
+    } finally {
+      _subiendoFoto = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> eliminarFoto(ProgressPhoto foto) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await _storageService.eliminarFoto(foto.url);
+      await _firestoreService.eliminarFotoProgreso(uid, foto.id);
+      _fotosProgreso = _fotosProgreso.where((f) => f.id != foto.id).toList();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('HomeProvider: error eliminando foto: $e');
     }
   }
 

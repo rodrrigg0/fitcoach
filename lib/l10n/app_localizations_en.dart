@@ -426,4 +426,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingLoadingPlanReady => 'Your plan is ready';
+
+  @override
+  String get profilePhotosSection => 'PROGRESS PHOTOS';
+
+  @override
+  String get profilePhotosAdd => 'Add';
+
+  @override
+  String get profilePhotosEmpty =>
+      'Add your first photo\nto track your progress';
+
+  @override
+  String get profilePhotosCompare => 'Compare';
+
+  @override
+  String get profilePhotosCamera => 'Camera';
+
+  @override
+  String get profilePhotosGallery => 'Gallery';
+
+  @override
+  String get profilePhotosNotesHint => 'Notes (optional)';
+
+  @override
+  String get profilePhotosWeightHint => 'Weight in this photo, e.g. 75.5';
+
+  @override
+  String get profilePhotosUploadButton => 'Upload photo';
+
+  @override
+  String get profilePhotosUploading => 'Uploading...';
+
+  @override
+  String get profilePhotosDeleteConfirm => 'Delete this photo?';
+
+  @override
+  String get profilePhotosDeleteMessage => 'This action cannot be undone';
+
+  @override
+  String get profilePhotosDelete => 'Delete';
+
+  @override
+  String get profilePhotosCompareTitle => 'Progress comparison';
+
+  @override
+  String get profilePhotosFirst => 'Start';
+
+  @override
+  String get profilePhotosLatest => 'Now';
+
+  @override
+  String get profilePhotosSaved => 'Photo saved';
+
+  @override
+  String get profilePhotosDeleted => 'Photo deleted';
+
+  @override
+  String get profilePhotosErrorUpload => 'Error uploading photo';
+
+  @override
+  String profilePhotosWeightDelta(String delta) {
+    return '$delta kg difference';
+  }
 }

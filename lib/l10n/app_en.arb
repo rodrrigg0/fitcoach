@@ -141,5 +141,26 @@
   "onboardingLoadingPhase0": "Analysing your profile...",
   "onboardingLoadingPhase1": "Creating your personalized plan...",
   "onboardingLoadingDone": "Ready, {name}!",
-  "onboardingLoadingPlanReady": "Your plan is ready"
+  "onboardingLoadingPlanReady": "Your plan is ready",
+
+  "profilePhotosSection": "PROGRESS PHOTOS",
+  "profilePhotosAdd": "Add",
+  "profilePhotosEmpty": "Add your first photo\nto track your progress",
+  "profilePhotosCompare": "Compare",
+  "profilePhotosCamera": "Camera",
+  "profilePhotosGallery": "Gallery",
+  "profilePhotosNotesHint": "Notes (optional)",
+  "profilePhotosWeightHint": "Weight in this photo, e.g. 75.5",
+  "profilePhotosUploadButton": "Upload photo",
+  "profilePhotosUploading": "Uploading...",
+  "profilePhotosDeleteConfirm": "Delete this photo?",
+  "profilePhotosDeleteMessage": "This action cannot be undone",
+  "profilePhotosDelete": "Delete",
+  "profilePhotosCompareTitle": "Progress comparison",
+  "profilePhotosFirst": "Start",
+  "profilePhotosLatest": "Now",
+  "profilePhotosSaved": "Photo saved",
+  "profilePhotosDeleted": "Photo deleted",
+  "profilePhotosErrorUpload": "Error uploading photo",
+  "profilePhotosWeightDelta": "{delta} kg difference"
 }
