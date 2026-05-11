@@ -11,6 +11,7 @@ import 'package:fitcoach/data/models/weight_log.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/core/providers/locale_provider.dart';
+import 'package:fitcoach/core/utils/tutorial_manager.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -555,29 +556,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: AppColors.backgroundCard,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  const Icon(Icons.language,
-                      color: AppColors.textSecondary, size: 16),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n.profileLanguage,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.language,
+                          color: AppColors.textSecondary, size: 16),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          l10n.profileLanguage,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
+                      _LangToggle(
+                        isEs: isEs,
+                        onToggle: () => localeProvider.toggleLocale(),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(
+                    height: 0.5, thickness: 0.5, color: AppColors.border),
+                GestureDetector(
+                  onTap: () async {
+                    await TutorialManager.resetearTutorial();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tutorial restablecido. Vuelve al inicio para verlo.'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.help_outline,
+                            color: AppColors.textSecondary, size: 16),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Ver tutorial de nuevo',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            color: AppColors.textSecondary, size: 16),
+                      ],
                     ),
                   ),
-                  _LangToggle(
-                    isEs: isEs,
-                    onToggle: () => localeProvider.toggleLocale(),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

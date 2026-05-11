@@ -15,6 +15,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final GlobalKey _keyBottomNav = GlobalKey();
 
   void _onTabChange(int index) {
     setState(() => _currentIndex = index);
@@ -28,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeScreen(onTabChange: _onTabChange),
+          HomeScreen(onTabChange: _onTabChange, bottomNavKey: _keyBottomNav),
           const TrainingScreen(),
           const NutritionScreen(),
           const ChatScreen(),
@@ -40,6 +41,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildBottomNav(AppLocalizations l10n) {
     return Container(
+      key: _keyBottomNav,
       color: AppColors.background,
       child: SafeArea(
         top: false,

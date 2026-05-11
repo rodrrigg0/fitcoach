@@ -1,80 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
+import 'package:fitcoach/core/utils/tutorial_manager.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/number_picker_wheel.dart';
 import 'package:fitcoach/shared/widgets/shimmer_loading.dart';
 import 'package:fitcoach/shared/widgets/tap_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final void Function(int)? onTabChange;
+  final GlobalKey? bottomNavKey;
 
-  const HomeScreen({super.key, this.onTabChange});
+  const HomeScreen({super.key, this.onTabChange, this.bottomNavKey});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey _keyHeader = GlobalKey();
+  final GlobalKey _keyHeroCard = GlobalKey();
+  final GlobalKey _keyMetricas = GlobalKey();
+  final GlobalKey _keyRacha = GlobalKey();
+  final GlobalKey _keyMacros = GlobalKey();
+  final GlobalKey _keyChat = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final mostrar = await TutorialManager.debesMostrarTutorial();
+      if (mostrar && mounted) {
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted && _keyHeader.currentContext != null) {
+          _mostrarTutorial();
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<HomeProvider>(
       builder: (context, provider, _) {
         if (provider.cargando) {
-          return Scaffold(
-            backgroundColor: AppColors.background,
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            ShimmerBox(width: 80, height: 12, radius: 6),
-                            SizedBox(height: 6),
-                            ShimmerBox(width: 140, height: 20, radius: 6),
-                          ],
-                        ),
-                        const ShimmerBox(width: 38, height: 38, radius: 19),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const ShimmerBox(height: 120, radius: 16),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              ShimmerBox(height: 80, radius: 12),
-                              SizedBox(height: 8),
-                              ShimmerBox(height: 80, radius: 12),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              ShimmerBox(height: 80, radius: 12),
-                              SizedBox(height: 8),
-                              ShimmerBox(height: 80, radius: 12),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const ShimmerBox(height: 60, radius: 14),
-                  ],
-                ),
-              ),
-            ),
-          );
+          return _buildShimmer();
         }
 
         return Scaffold(
@@ -86,17 +60,35 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-                  _buildHeader(context, provider),
+                  KeyedSubtree(
+                    key: _keyHeader,
+                    child: _buildHeader(context, provider),
+                  ),
                   const SizedBox(height: 20),
-                  _buildHeroCard(context, provider),
+                  KeyedSubtree(
+                    key: _keyHeroCard,
+                    child: _buildHeroCard(context, provider),
+                  ),
                   const SizedBox(height: 16),
-                  _buildMetricsGrid(context, provider),
+                  KeyedSubtree(
+                    key: _keyMetricas,
+                    child: _buildMetricsGrid(context, provider),
+                  ),
                   const SizedBox(height: 16),
-                  _buildRachaSemanal(context, provider),
+                  KeyedSubtree(
+                    key: _keyRacha,
+                    child: _buildRachaSemanal(context, provider),
+                  ),
                   const SizedBox(height: 16),
-                  _buildMacros(context, provider),
+                  KeyedSubtree(
+                    key: _keyMacros,
+                    child: _buildMacros(context, provider),
+                  ),
                   const SizedBox(height: 16),
-                  _buildChatAccess(context, provider),
+                  KeyedSubtree(
+                    key: _keyChat,
+                    child: _buildChatAccess(context, provider),
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -104,6 +96,67 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  // ─── SHIMMER ───────────────────────────────────────────────
+
+  Widget _buildShimmer() {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      ShimmerBox(width: 80, height: 12, radius: 6),
+                      SizedBox(height: 6),
+                      ShimmerBox(width: 140, height: 20, radius: 6),
+                    ],
+                  ),
+                  const ShimmerBox(width: 38, height: 38, radius: 19),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const ShimmerBox(height: 120, radius: 16),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: const [
+                        ShimmerBox(height: 80, radius: 12),
+                        SizedBox(height: 8),
+                        ShimmerBox(height: 80, radius: 12),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      children: const [
+                        ShimmerBox(height: 80, radius: 12),
+                        SizedBox(height: 8),
+                        ShimmerBox(height: 80, radius: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const ShimmerBox(height: 60, radius: 14),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -117,7 +170,6 @@ class HomeScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Saludo izquierda
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -140,8 +192,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-
-        // Derecha: racha + avatar
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -164,7 +214,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
             ],
-            // Avatar — siempre a la derecha
             GestureDetector(
               onTap: () => context.push(AppConstants.routeProfile),
               child: Container(
@@ -271,7 +320,6 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tag HOY · CATEGORIA
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
             decoration: BoxDecoration(
@@ -382,7 +430,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 14),
                 GestureDetector(
-                  onTap: () => onTabChange?.call(1),
+                  onTap: () => widget.onTabChange?.call(1),
                   child: Text(
                     AppLocalizations.of(context)!.homeViewFullPlan,
                     style: const TextStyle(
@@ -594,47 +642,47 @@ class HomeScreen extends StatelessWidget {
 
     final suenoCard = _metricCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            registrado
+                ? AppLocalizations.of(context)!.homeSleepLabel
+                : AppLocalizations.of(context)!.homeSleepQuestion,
+            style: const TextStyle(
+                color: AppColors.textSecondary, fontSize: 11),
+          ),
+          const SizedBox(height: 6),
+          if (registrado) ...[
             Text(
-              registrado
-                  ? AppLocalizations.of(context)!.homeSleepLabel
-                  : AppLocalizations.of(context)!.homeSleepQuestion,
+              '$horas h',
               style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 11),
+                color: AppColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 6),
-            if (registrado) ...[
-              Text(
-                '$horas h',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: (horas / 8.0).clamp(0.0, 1.0),
+                backgroundColor: AppColors.backgroundElevated,
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                minHeight: 3,
               ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  value: (horas / 8.0).clamp(0.0, 1.0),
-                  backgroundColor: AppColors.backgroundElevated,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                  minHeight: 3,
-                ),
+            ),
+          ] else
+            Text(
+              AppLocalizations.of(context)!.homeSleepRegister,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-            ] else
-              Text(
-                AppLocalizations.of(context)!.homeSleepRegister,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-          ],
-        ),
+            ),
+        ],
+      ),
     );
     if (registrado) return suenoCard;
     return TapCard(
@@ -710,7 +758,6 @@ class HomeScreen extends StatelessWidget {
     final hoyIdx = DateTime.now().weekday - 1;
     const letras = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
-    // Determinar qué días son descanso según el plan
     final plan = provider.planEntrenamiento;
     final esDescansoPerDia = List.generate(7, (i) {
       if (plan == null) return false;
@@ -952,7 +999,7 @@ class HomeScreen extends StatelessWidget {
     }
 
     return TapCard(
-      onTap: () => onTabChange?.call(3),
+      onTap: () => widget.onTabChange?.call(3),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -1006,6 +1053,357 @@ class HomeScreen extends StatelessWidget {
                 color: AppColors.primary, size: 18),
           ],
         ),
+      ),
+    );
+  }
+
+  // ─── TUTORIAL ──────────────────────────────────────────────
+
+  void _mostrarTutorial() {
+    final hasBottomNav = widget.bottomNavKey != null;
+    final total = hasBottomNav ? 7 : 6;
+
+    // Capture paso numbers at build time, not inside closures
+    final pasos = List.generate(
+      total,
+      (i) => '${i + 1} / $total',
+    );
+    int idx = 0;
+
+    final targets = <TargetFocus>[];
+
+    if (hasBottomNav) {
+      final p = pasos[idx++];
+      targets.add(TargetFocus(
+        identify: 'bottom_nav',
+        keyTarget: widget.bottomNavKey!,
+        alignSkip: Alignment.topRight,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (ctx, controller) => _tutorialCard(
+              icon: Icons.grid_view,
+              titulo: 'Navegación principal',
+              descripcion:
+                  'Aquí tienes acceso a los cuatro módulos: '
+                  'Inicio, Entrenamiento, Nutrición y Chat '
+                  'con tu entrenador.',
+              paso: p,
+              controller: controller,
+            ),
+          ),
+        ],
+      ));
+    }
+
+    final pasoHeader = pasos[idx++];
+    targets.add(TargetFocus(
+      identify: 'header',
+      keyTarget: _keyHeader,
+      alignSkip: Alignment.bottomRight,
+      enableOverlayTab: true,
+      contents: [
+        TargetContent(
+          align: ContentAlign.bottom,
+          builder: (ctx, controller) => _tutorialCard(
+            icon: Icons.person_outline,
+            titulo: 'Tu perfil',
+            descripcion:
+                'Aquí aparece tu nombre y tu racha de días '
+                'entrenando. Pulsa el avatar para ver y '
+                'editar tu perfil completo.',
+            paso: pasoHeader,
+            controller: controller,
+          ),
+        ),
+      ],
+    ));
+
+    final pasoHero = pasos[idx++];
+    targets.add(TargetFocus(
+      identify: 'hero_card',
+      keyTarget: _keyHeroCard,
+      alignSkip: Alignment.bottomRight,
+      enableOverlayTab: true,
+      shape: ShapeLightFocus.RRect,
+      radius: 16,
+      contents: [
+        TargetContent(
+          align: ContentAlign.bottom,
+          builder: (ctx, controller) => _tutorialCard(
+            icon: Icons.fitness_center,
+            titulo: 'Tu entrenamiento de hoy',
+            descripcion:
+                'Aquí ves la sesión que tienes programada. '
+                'Pulsa "Iniciar sesión" para empezar y '
+                'registrar tus pesos y repeticiones.',
+            paso: pasoHero,
+            controller: controller,
+          ),
+        ),
+      ],
+    ));
+
+    final pasoMetricas = pasos[idx++];
+    targets.add(TargetFocus(
+      identify: 'metricas',
+      keyTarget: _keyMetricas,
+      alignSkip: Alignment.bottomRight,
+      enableOverlayTab: true,
+      shape: ShapeLightFocus.RRect,
+      radius: 12,
+      contents: [
+        TargetContent(
+          align: ContentAlign.bottom,
+          builder: (ctx, controller) => _tutorialCard(
+            icon: Icons.bar_chart,
+            titulo: 'Tus métricas del día',
+            descripcion:
+                'Consulta tus calorías, la próxima comida, '
+                'tu peso actual y las horas de sueño. '
+                'Pulsa "Registrar" para añadir tu sueño de hoy.',
+            paso: pasoMetricas,
+            controller: controller,
+          ),
+        ),
+      ],
+    ));
+
+    final pasoRacha = pasos[idx++];
+    targets.add(TargetFocus(
+      identify: 'racha',
+      keyTarget: _keyRacha,
+      alignSkip: Alignment.bottomRight,
+      enableOverlayTab: true,
+      shape: ShapeLightFocus.RRect,
+      radius: 14,
+      contents: [
+        TargetContent(
+          align: ContentAlign.top,
+          builder: (ctx, controller) => _tutorialCard(
+            icon: Icons.local_fire_department,
+            titulo: 'Tu racha semanal',
+            descripcion:
+                'Aquí ves los días que has entrenado '
+                'esta semana. El objetivo es completar '
+                'todos tus días programados.',
+            paso: pasoRacha,
+            controller: controller,
+          ),
+        ),
+      ],
+    ));
+
+    final pasoMacros = pasos[idx++];
+    targets.add(TargetFocus(
+      identify: 'macros',
+      keyTarget: _keyMacros,
+      alignSkip: Alignment.bottomRight,
+      enableOverlayTab: true,
+      shape: ShapeLightFocus.RRect,
+      radius: 14,
+      contents: [
+        TargetContent(
+          align: ContentAlign.top,
+          builder: (ctx, controller) => _tutorialCard(
+            icon: Icons.restaurant,
+            titulo: 'Tus macros del día',
+            descripcion:
+                'Seguimiento en tiempo real de tus '
+                'proteínas, carbohidratos y grasas. '
+                'Ve a Nutrición para ver el plan completo.',
+            paso: pasoMacros,
+            controller: controller,
+          ),
+        ),
+      ],
+    ));
+
+    final pasoChat = pasos[idx];
+    targets.add(TargetFocus(
+      identify: 'chat',
+      keyTarget: _keyChat,
+      alignSkip: Alignment.topRight,
+      enableOverlayTab: true,
+      shape: ShapeLightFocus.RRect,
+      radius: 14,
+      contents: [
+        TargetContent(
+          align: ContentAlign.top,
+          builder: (ctx, controller) => _tutorialCard(
+            icon: Icons.chat_bubble_outline,
+            titulo: 'Tu entrenador personal',
+            descripcion:
+                'Disponible 24h para resolver cualquier '
+                'duda sobre tu plan, nutrición, '
+                'suplementación o lesiones. '
+                '¡Pregúntale lo que quieras!',
+            paso: pasoChat,
+            controller: controller,
+            esUltimo: true,
+          ),
+        ),
+      ],
+    ));
+
+    TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black,
+      opacityShadow: 0.85,
+      textSkip: 'Saltar',
+      textStyleSkip: const TextStyle(
+        color: Color(0xFF888888),
+        fontSize: 13,
+      ),
+      paddingFocus: 8,
+      focusAnimationDuration: const Duration(milliseconds: 350),
+      pulseAnimationDuration: const Duration(milliseconds: 800),
+      onFinish: () => TutorialManager.marcarTutorialVisto(),
+      onSkip: () {
+        TutorialManager.marcarTutorialVisto();
+        return true;
+      },
+      onClickTarget: (target) {},
+      onClickOverlay: (target) {},
+    ).show(context: context);
+  }
+
+  Widget _tutorialCard({
+    required IconData icon,
+    required String titulo,
+    required String descripcion,
+    required String paso,
+    required TutorialCoachMarkController controller,
+    bool esUltimo = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFC8F135).withAlpha(77),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(102),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC8F135).withAlpha(38),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFFC8F135),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  titulo,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                paso,
+                style: const TextStyle(
+                  color: Color(0xFF888888),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            descripcion,
+            style: const TextStyle(
+              color: Color(0xFFCCCCCC),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (!esUltimo)
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.skip(),
+                    child: const Text(
+                      'Saltar tutorial',
+                      style: TextStyle(
+                        color: Color(0xFF888888),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => controller.next(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC8F135),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'Siguiente →',
+                      style: TextStyle(
+                        color: Color(0xFF0D0D0D),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            GestureDetector(
+              onTap: () => controller.next(),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC8F135),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '¡Empezar a entrenar!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF0D0D0D),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
