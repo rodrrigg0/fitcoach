@@ -5,6 +5,7 @@ import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/services/chat_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
+import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -186,7 +187,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildSugerencia(_Sugerencia s) {
-    return GestureDetector(
+    return TapCard(
       onTap: () => _enviar(s.titulo),
       child: Container(
         width: double.infinity,

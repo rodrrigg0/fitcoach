@@ -8,6 +8,7 @@ import 'package:fitcoach/data/services/training_provider.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/exercise_log.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
+import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 class TrainingScreen extends StatelessWidget {
   const TrainingScreen({super.key});
@@ -260,7 +261,7 @@ class TrainingScreen extends StatelessWidget {
             ),
           ),
         ),
-        ...mostrar.map((sesion) => GestureDetector(
+        ...mostrar.map((sesion) => TapCard(
               onTap: () => _showSessionDetail(context, sesion),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -536,7 +537,7 @@ class TrainingScreen extends StatelessWidget {
                 itemCount: sesiones.length,
                 itemBuilder: (ctx, i) {
                   final sesion = sesiones[i];
-                  return GestureDetector(
+                  return TapCard(
                     onTap: () {
                       Navigator.pop(ctx);
                       _showSessionDetail(context, sesion);
@@ -689,11 +690,9 @@ class _WorkoutDayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
+    final cardWidget = Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
           color: esHoy
               ? AppColors.primary.withAlpha(13)
               : AppColors.backgroundCard,
@@ -841,8 +840,9 @@ class _WorkoutDayCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
+    if (onTap == null) return cardWidget;
+    return TapCard(onTap: onTap!, child: cardWidget);
   }
 
   String _labelTipo(BuildContext context, String tipo) {

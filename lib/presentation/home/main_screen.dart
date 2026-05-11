@@ -34,43 +34,81 @@ class _MainScreenState extends State<MainScreen> {
           const ChatScreen(),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 0.5),
+      bottomNavigationBar: _buildBottomNav(l10n),
+    );
+  }
+
+  Widget _buildBottomNav(AppLocalizations l10n) {
+    return Container(
+      color: AppColors.background,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              top: BorderSide(color: Color(0xFF1A1A1A), width: 0.5),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home, l10n.navHome),
+              _buildNavItem(1, Icons.fitness_center_outlined,
+                  Icons.fitness_center, l10n.navTraining),
+              _buildNavItem(2, Icons.restaurant_outlined, Icons.restaurant,
+                  l10n.navNutrition),
+              _buildNavItem(
+                  3, Icons.chat_bubble_outline, Icons.chat_bubble, l10n.navChat),
+            ],
           ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabChange,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.background,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: const Color(0xFF444444),
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          elevation: 0,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home),
-              label: l10n.navHome,
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+      int index, IconData icon, IconData activeIcon, String label) {
+    final selected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: selected ? 16 : 12,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withAlpha(31)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                selected ? activeIcon : icon,
+                key: ValueKey(selected),
+                color: selected ? AppColors.primary : const Color(0xFF444444),
+                size: 22,
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.fitness_center_outlined),
-              activeIcon: const Icon(Icons.fitness_center),
-              label: l10n.navTraining,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.restaurant_outlined),
-              activeIcon: const Icon(Icons.restaurant),
-              label: l10n.navNutrition,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.chat_bubble_outline),
-              activeIcon: const Icon(Icons.chat_bubble),
-              label: l10n.navChat,
-            ),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
       ),

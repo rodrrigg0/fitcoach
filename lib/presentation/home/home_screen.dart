@@ -6,6 +6,8 @@ import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/number_picker_wheel.dart';
+import 'package:fitcoach/shared/widgets/shimmer_loading.dart';
+import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 class HomeScreen extends StatelessWidget {
   final void Function(int)? onTabChange;
@@ -17,10 +19,60 @@ class HomeScreen extends StatelessWidget {
     return Consumer<HomeProvider>(
       builder: (context, provider, _) {
         if (provider.cargando) {
-          return const Scaffold(
+          return Scaffold(
             backgroundColor: AppColors.background,
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            ShimmerBox(width: 80, height: 12, radius: 6),
+                            SizedBox(height: 6),
+                            ShimmerBox(width: 140, height: 20, radius: 6),
+                          ],
+                        ),
+                        const ShimmerBox(width: 38, height: 38, radius: 19),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const ShimmerBox(height: 120, radius: 16),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              ShimmerBox(height: 80, radius: 12),
+                              SizedBox(height: 8),
+                              ShimmerBox(height: 80, radius: 12),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              ShimmerBox(height: 80, radius: 12),
+                              SizedBox(height: 8),
+                              ShimmerBox(height: 80, radius: 12),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const ShimmerBox(height: 60, radius: 14),
+                  ],
+                ),
+              ),
             ),
           );
         }
@@ -540,12 +592,8 @@ class HomeScreen extends StatelessWidget {
     final registrado = provider.suenoRegistradoHoy;
     final horas = provider.horasSueno;
 
-    return GestureDetector(
-      onTap: registrado
-          ? null
-          : () => _showSuenoModal(context, provider),
-      child: _metricCard(
-        child: Column(
+    final suenoCard = _metricCard(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -587,7 +635,11 @@ class HomeScreen extends StatelessWidget {
               ),
           ],
         ),
-      ),
+    );
+    if (registrado) return suenoCard;
+    return TapCard(
+      onTap: () => _showSuenoModal(context, provider),
+      child: suenoCard,
     );
   }
 
@@ -899,7 +951,7 @@ class HomeScreen extends StatelessWidget {
       pregunta = l10n.homeReadyQuestion(deporte);
     }
 
-    return GestureDetector(
+    return TapCard(
       onTap: () => onTabChange?.call(3),
       child: Container(
         padding: const EdgeInsets.all(16),

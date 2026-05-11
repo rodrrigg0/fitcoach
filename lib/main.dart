@@ -28,8 +28,11 @@ Future<void> main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF0D0D0D),
+      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   final localeProvider = LocaleProvider();
   await localeProvider.cargarPreferencia();
@@ -84,6 +87,10 @@ class FitCoachApp extends StatelessWidget {
             Locale('es'),
             Locale('en'),
           ],
+          scrollBehavior: const ScrollBehavior().copyWith(
+            physics: const BouncingScrollPhysics(),
+            scrollbars: false,
+          ),
           routerConfig: AppRouter.router,
         ),
       ),

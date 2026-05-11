@@ -6,6 +6,7 @@ import 'package:fitcoach/data/models/shopping_item.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/meal_detail_sheet.dart';
+import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 void _showMacroAdjustSheet(BuildContext context, HomeProvider provider) {
   showModalBottomSheet(
@@ -800,7 +801,7 @@ class _DayMealCardState extends State<_DayMealCard> {
     final ingredientesPreview = meal.ingredientes.take(3).join(', ') +
         (meal.ingredientes.length > 3 ? '...' : '');
 
-    return GestureDetector(
+    return TapCard(
       onTap: () => widget.onTapMeal(meal),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
@@ -904,7 +905,7 @@ class _ShoppingItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapCard(
       onTap: onToggle,
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
@@ -1006,7 +1007,7 @@ class _MealCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapCard(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

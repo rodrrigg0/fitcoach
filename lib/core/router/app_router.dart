@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
+import 'package:fitcoach/core/router/app_transitions.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/presentation/auth/splash_screen.dart';
@@ -20,53 +21,80 @@ class AppRouter {
     routes: [
       GoRoute(
         path: AppConstants.routeSplash,
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => fadePage(
+          child: const SplashScreen(),
+          state: state,
+        ),
       ),
       GoRoute(
         path: AppConstants.routeLogin,
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => fadePage(
+          child: const LoginScreen(),
+          state: state,
+        ),
       ),
       GoRoute(
         path: AppConstants.routeRegister,
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => slideHorizontal(
+          child: const RegisterScreen(),
+          state: state,
+        ),
       ),
       GoRoute(
         path: AppConstants.routeOnboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => fadePage(
+          child: const OnboardingScreen(),
+          state: state,
+        ),
       ),
       GoRoute(
         path: AppConstants.routeProfileLoading,
-        builder: (context, state) => ProfileLoadingScreen(
-          profile: state.extra as UserProfile,
+        pageBuilder: (context, state) => fadePage(
+          child: ProfileLoadingScreen(
+            profile: state.extra as UserProfile,
+          ),
+          state: state,
         ),
       ),
       GoRoute(
         path: AppConstants.routeHome,
-        builder: (context, state) => const MainScreen(),
+        pageBuilder: (context, state) => fadePage(
+          child: const MainScreen(),
+          state: state,
+        ),
       ),
       GoRoute(
         path: AppConstants.routeSessionDetail,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final args = state.extra as Map<String, dynamic>;
-          return SessionDetailScreen(
-            workout: args['workout'] as WorkoutDay,
-            diaNombre: args['diaNombre'] as String,
+          return fadeSlideUp(
+            child: SessionDetailScreen(
+              workout: args['workout'] as WorkoutDay,
+              diaNombre: args['diaNombre'] as String,
+            ),
+            state: state,
           );
         },
       ),
       GoRoute(
         path: AppConstants.routeActiveSession,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final args = state.extra as Map<String, dynamic>;
-          return ActiveSessionScreen(
-            workout: args['workout'] as WorkoutDay,
-            diaNombre: args['diaNombre'] as String,
+          return fadeSlideUp(
+            child: ActiveSessionScreen(
+              workout: args['workout'] as WorkoutDay,
+              diaNombre: args['diaNombre'] as String,
+            ),
+            state: state,
           );
         },
       ),
       GoRoute(
         path: AppConstants.routeProfile,
-        builder: (context, state) => const ProfileScreen(),
+        pageBuilder: (context, state) => slideHorizontal(
+          child: const ProfileScreen(),
+          state: state,
+        ),
       ),
     ],
   );
