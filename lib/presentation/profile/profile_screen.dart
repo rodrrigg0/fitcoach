@@ -42,8 +42,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.background,
+          resizeToAvoidBottomInset: false,
           body: SafeArea(
             child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 20,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -55,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildPesoSection(context, provider),
                   ],
                   _buildSettingsSection(context),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

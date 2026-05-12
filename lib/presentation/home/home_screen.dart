@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:fitcoach/shared/widgets/app_tutorial.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/utils/tutorial_manager.dart';
@@ -1060,350 +1060,76 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── TUTORIAL ──────────────────────────────────────────────
 
   void _mostrarTutorial() {
-    final hasBottomNav = widget.bottomNavKey != null;
-    final total = hasBottomNav ? 7 : 6;
-
-    // Capture paso numbers at build time, not inside closures
-    final pasos = List.generate(
-      total,
-      (i) => '${i + 1} / $total',
-    );
-    int idx = 0;
-
-    final targets = <TargetFocus>[];
-
-    if (hasBottomNav) {
-      final p = pasos[idx++];
-      targets.add(TargetFocus(
-        identify: 'bottom_nav',
-        keyTarget: widget.bottomNavKey!,
-        alignSkip: Alignment.topRight,
-        enableOverlayTab: true,
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            builder: (ctx, controller) => _tutorialCard(
-              icon: Icons.grid_view,
-              titulo: 'Navegación principal',
-              descripcion:
-                  'Aquí tienes acceso a los cuatro módulos: '
-                  'Inicio, Entrenamiento, Nutrición y Chat '
-                  'con tu entrenador.',
-              paso: p,
-              controller: controller,
-            ),
-          ),
-        ],
-      ));
-    }
-
-    final pasoHeader = pasos[idx++];
-    targets.add(TargetFocus(
-      identify: 'header',
-      keyTarget: _keyHeader,
-      alignSkip: Alignment.bottomRight,
-      enableOverlayTab: true,
-      contents: [
-        TargetContent(
-          align: ContentAlign.bottom,
-          builder: (ctx, controller) => _tutorialCard(
-            icon: Icons.person_outline,
-            titulo: 'Tu perfil',
-            descripcion:
-                'Aquí aparece tu nombre y tu racha de días '
-                'entrenando. Pulsa el avatar para ver y '
-                'editar tu perfil completo.',
-            paso: pasoHeader,
-            controller: controller,
-          ),
+    final steps = <TutorialStep>[
+      if (widget.bottomNavKey != null)
+        TutorialStep(
+          targetKey: widget.bottomNavKey!,
+          titulo: 'Navegación principal',
+          descripcion:
+              'Accede a Inicio, Entrenamiento, Nutrición y Chat desde aquí.',
+          icon: Icons.grid_view,
         ),
-      ],
-    ));
-
-    final pasoHero = pasos[idx++];
-    targets.add(TargetFocus(
-      identify: 'hero_card',
-      keyTarget: _keyHeroCard,
-      alignSkip: Alignment.bottomRight,
-      enableOverlayTab: true,
-      shape: ShapeLightFocus.RRect,
-      radius: 16,
-      contents: [
-        TargetContent(
-          align: ContentAlign.bottom,
-          builder: (ctx, controller) => _tutorialCard(
-            icon: Icons.fitness_center,
-            titulo: 'Tu entrenamiento de hoy',
-            descripcion:
-                'Aquí ves la sesión que tienes programada. '
-                'Pulsa "Iniciar sesión" para empezar y '
-                'registrar tus pesos y repeticiones.',
-            paso: pasoHero,
-            controller: controller,
-          ),
-        ),
-      ],
-    ));
-
-    final pasoMetricas = pasos[idx++];
-    targets.add(TargetFocus(
-      identify: 'metricas',
-      keyTarget: _keyMetricas,
-      alignSkip: Alignment.bottomRight,
-      enableOverlayTab: true,
-      shape: ShapeLightFocus.RRect,
-      radius: 12,
-      contents: [
-        TargetContent(
-          align: ContentAlign.bottom,
-          builder: (ctx, controller) => _tutorialCard(
-            icon: Icons.bar_chart,
-            titulo: 'Tus métricas del día',
-            descripcion:
-                'Consulta tus calorías, la próxima comida, '
-                'tu peso actual y las horas de sueño. '
-                'Pulsa "Registrar" para añadir tu sueño de hoy.',
-            paso: pasoMetricas,
-            controller: controller,
-          ),
-        ),
-      ],
-    ));
-
-    final pasoRacha = pasos[idx++];
-    targets.add(TargetFocus(
-      identify: 'racha',
-      keyTarget: _keyRacha,
-      alignSkip: Alignment.bottomRight,
-      enableOverlayTab: true,
-      shape: ShapeLightFocus.RRect,
-      radius: 14,
-      contents: [
-        TargetContent(
-          align: ContentAlign.top,
-          builder: (ctx, controller) => _tutorialCard(
-            icon: Icons.local_fire_department,
-            titulo: 'Tu racha semanal',
-            descripcion:
-                'Aquí ves los días que has entrenado '
-                'esta semana. El objetivo es completar '
-                'todos tus días programados.',
-            paso: pasoRacha,
-            controller: controller,
-          ),
-        ),
-      ],
-    ));
-
-    final pasoMacros = pasos[idx++];
-    targets.add(TargetFocus(
-      identify: 'macros',
-      keyTarget: _keyMacros,
-      alignSkip: Alignment.bottomRight,
-      enableOverlayTab: true,
-      shape: ShapeLightFocus.RRect,
-      radius: 14,
-      contents: [
-        TargetContent(
-          align: ContentAlign.top,
-          builder: (ctx, controller) => _tutorialCard(
-            icon: Icons.restaurant,
-            titulo: 'Tus macros del día',
-            descripcion:
-                'Seguimiento en tiempo real de tus '
-                'proteínas, carbohidratos y grasas. '
-                'Ve a Nutrición para ver el plan completo.',
-            paso: pasoMacros,
-            controller: controller,
-          ),
-        ),
-      ],
-    ));
-
-    final pasoChat = pasos[idx];
-    targets.add(TargetFocus(
-      identify: 'chat',
-      keyTarget: _keyChat,
-      alignSkip: Alignment.topRight,
-      enableOverlayTab: true,
-      shape: ShapeLightFocus.RRect,
-      radius: 14,
-      contents: [
-        TargetContent(
-          align: ContentAlign.top,
-          builder: (ctx, controller) => _tutorialCard(
-            icon: Icons.chat_bubble_outline,
-            titulo: 'Tu entrenador personal',
-            descripcion:
-                'Disponible 24h para resolver cualquier '
-                'duda sobre tu plan, nutrición, '
-                'suplementación o lesiones. '
-                '¡Pregúntale lo que quieras!',
-            paso: pasoChat,
-            controller: controller,
-            esUltimo: true,
-          ),
-        ),
-      ],
-    ));
-
-    TutorialCoachMark(
-      targets: targets,
-      colorShadow: Colors.black,
-      opacityShadow: 0.85,
-      textSkip: 'Saltar',
-      textStyleSkip: const TextStyle(
-        color: Color(0xFF888888),
-        fontSize: 13,
+      TutorialStep(
+        targetKey: _keyHeader,
+        titulo: 'Tu perfil',
+        descripcion:
+            'Aquí aparece tu nombre y tu racha de días entrenando. '
+            'Pulsa el avatar para ver y editar tu perfil completo.',
+        icon: Icons.person_outline,
       ),
-      paddingFocus: 8,
-      focusAnimationDuration: const Duration(milliseconds: 350),
-      pulseAnimationDuration: const Duration(milliseconds: 800),
-      onFinish: () => TutorialManager.marcarTutorialVisto(),
-      onSkip: () {
-        TutorialManager.marcarTutorialVisto();
-        return true;
-      },
-      onClickTarget: (target) {},
-      onClickOverlay: (target) {},
-    ).show(context: context);
-  }
-
-  Widget _tutorialCard({
-    required IconData icon,
-    required String titulo,
-    required String descripcion,
-    required String paso,
-    required TutorialCoachMarkController controller,
-    bool esUltimo = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFC8F135).withAlpha(77),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(102),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+      TutorialStep(
+        targetKey: _keyHeroCard,
+        titulo: 'Tu entrenamiento de hoy',
+        descripcion:
+            "Aquí ves la sesión programada. Pulsa 'Iniciar sesión' "
+            'para empezar y registrar tus pesos y repeticiones.',
+        icon: Icons.fitness_center,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC8F135).withAlpha(38),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFFC8F135),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  titulo,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Text(
-                paso,
-                style: const TextStyle(
-                  color: Color(0xFF888888),
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            descripcion,
-            style: const TextStyle(
-              color: Color(0xFFCCCCCC),
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (!esUltimo)
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => controller.skip(),
-                    child: const Text(
-                      'Saltar tutorial',
-                      style: TextStyle(
-                        color: Color(0xFF888888),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => controller.next(),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFC8F135),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Siguiente →',
-                      style: TextStyle(
-                        color: Color(0xFF0D0D0D),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            GestureDetector(
-              onTap: () => controller.next(),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC8F135),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  '¡Empezar a entrenar!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF0D0D0D),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-        ],
+      TutorialStep(
+        targetKey: _keyMetricas,
+        titulo: 'Tus métricas del día',
+        descripcion:
+            'Calorías, próxima comida, peso actual y horas de sueño '
+            'de un vistazo.',
+        icon: Icons.bar_chart,
+      ),
+      TutorialStep(
+        targetKey: _keyRacha,
+        titulo: 'Racha semanal',
+        descripcion:
+            'Días entrenados esta semana. '
+            '¡Intenta completar todos tus días programados!',
+        icon: Icons.local_fire_department,
+      ),
+      TutorialStep(
+        targetKey: _keyMacros,
+        titulo: 'Macros del día',
+        descripcion:
+            'Seguimiento de proteínas, carbohidratos y grasas en tiempo real.',
+        icon: Icons.restaurant,
+      ),
+      TutorialStep(
+        targetKey: widget.bottomNavKey ?? _keyHeader,
+        titulo: 'Tu entrenador personal',
+        descripcion:
+            'Pulsa el Chat en la barra inferior para hablar con tu '
+            'entrenador 24h sobre entrenamientos, nutrición, '
+            'suplementación o cualquier duda.',
+        icon: Icons.chat_bubble_outline,
+      ),
+    ];
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      transitionDuration: Duration.zero,
+      pageBuilder: (ctx, _, _) => AppTutorial(
+        steps: steps,
+        onFinish: () async {
+          Navigator.pop(ctx);
+          await TutorialManager.marcarTutorialVisto();
+        },
       ),
     );
   }

@@ -1172,153 +1172,174 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
     final grasFrac =
         totalCals > 0 ? (_grasas * 9) / totalCals : 0.33;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-          24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.backgroundCard,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          const SizedBox(height: 20),
-          Row(
+          child: Column(
             children: [
-              const Expanded(
-                child: Text(
-                  'Ajustar macros',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              Text(
-                '$totalCals kcal',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              height: 10,
-              child: Row(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    width: (MediaQuery.of(context).size.width - 48) *
-                        protFrac,
-                    color: const Color(0xFF4FC3F7),
-                  ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    width: (MediaQuery.of(context).size.width - 48) *
-                        carbsFrac,
-                    color: const Color(0xFFFFB74D),
-                  ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    width: (MediaQuery.of(context).size.width - 48) *
-                        grasFrac,
-                    color: const Color(0xFFEF9A9A),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              _legend(const Color(0xFF4FC3F7),
-                  'P ${(_proteinas * 4 / totalCals * 100).round()}%'),
-              const SizedBox(width: 12),
-              _legend(const Color(0xFFFFB74D),
-                  'C ${(_carbos * 4 / totalCals * 100).round()}%'),
-              const SizedBox(width: 12),
-              _legend(const Color(0xFFEF9A9A),
-                  'G ${(_grasas * 9 / totalCals * 100).round()}%'),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _sliderRow('Proteínas', _proteinas, 50, 350, 'g',
-              const Color(0xFF4FC3F7),
-              (v) => setState(() => _proteinas = v)),
-          _sliderRow('Carbohidratos', _carbos, 50, 600, 'g',
-              const Color(0xFFFFB74D),
-              (v) => setState(() => _carbos = v)),
-          _sliderRow('Grasas', _grasas, 20, 200, 'g',
-              const Color(0xFFEF9A9A),
-              (v) => setState(() => _grasas = v)),
-          if (_warnProtein) ...[
-            const SizedBox(height: 8),
-            _warning(
-                'Proteínas por debajo de 1.6g/kg. Puede limitar la recuperación muscular.'),
-          ],
-          if (_warnCalorias) ...[
-            const SizedBox(height: 8),
-            _warning(
-                'Total inferior a 1200 kcal. No recomendado sin supervisión médica.'),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: _restaurar,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    side: const BorderSide(color: AppColors.border),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: EdgeInsets.fromLTRB(
+                    24, 8, 24,
+                    MediaQuery.of(context).padding.bottom + 24,
                   ),
-                  child: const Text('Restaurar automático',
-                      style: TextStyle(fontSize: 13)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed:
-                      _guardando ? null : () => _guardar(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Ajustar macros',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '$totalCals kcal',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: SizedBox(
+                          height: 10,
+                          child: Row(
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                                width: (MediaQuery.of(context).size.width - 48) *
+                                    protFrac,
+                                color: const Color(0xFF4FC3F7),
+                              ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                                width: (MediaQuery.of(context).size.width - 48) *
+                                    carbsFrac,
+                                color: const Color(0xFFFFB74D),
+                              ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                                width: (MediaQuery.of(context).size.width - 48) *
+                                    grasFrac,
+                                color: const Color(0xFFEF9A9A),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _legend(const Color(0xFF4FC3F7),
+                              'P ${(_proteinas * 4 / totalCals * 100).round()}%'),
+                          const SizedBox(width: 12),
+                          _legend(const Color(0xFFFFB74D),
+                              'C ${(_carbos * 4 / totalCals * 100).round()}%'),
+                          const SizedBox(width: 12),
+                          _legend(const Color(0xFFEF9A9A),
+                              'G ${(_grasas * 9 / totalCals * 100).round()}%'),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _sliderRow('Proteínas', _proteinas, 50, 350, 'g',
+                          const Color(0xFF4FC3F7),
+                          (v) => setState(() => _proteinas = v)),
+                      _sliderRow('Carbohidratos', _carbos, 50, 600, 'g',
+                          const Color(0xFFFFB74D),
+                          (v) => setState(() => _carbos = v)),
+                      _sliderRow('Grasas', _grasas, 20, 200, 'g',
+                          const Color(0xFFEF9A9A),
+                          (v) => setState(() => _grasas = v)),
+                      if (_warnProtein) ...[
+                        const SizedBox(height: 8),
+                        _warning(
+                            'Proteínas por debajo de 1.6g/kg. Puede limitar la recuperación muscular.'),
+                      ],
+                      if (_warnCalorias) ...[
+                        const SizedBox(height: 8),
+                        _warning(
+                            'Total inferior a 1200 kcal. No recomendado sin supervisión médica.'),
+                      ],
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _restaurar,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.textSecondary,
+                                side: const BorderSide(color: AppColors.border),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('Restaurar automático',
+                                  style: TextStyle(fontSize: 13)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed:
+                                  _guardando ? null : () => _guardar(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.background,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('Guardar cambios',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  child: const Text('Guardar cambios',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
