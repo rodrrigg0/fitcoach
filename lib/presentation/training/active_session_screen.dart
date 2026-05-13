@@ -109,7 +109,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                   return _ExerciseLogCard(
                     key: ValueKey(ejercicio.id),
                     ejercicio: ejercicio,
-                    planDetalle: planEjercicio?.series,
+                    planDetalle: planEjercicio?.detalle,
                     provider: provider,
                   );
                 }),

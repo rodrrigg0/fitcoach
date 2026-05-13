@@ -313,12 +313,42 @@ class OnboardingProvider extends ChangeNotifier {
     _guardarRespuesta(numeroPaso, valorRespuesta);
     _aplicarStats(numeroPaso, valorRespuesta);
 
+    // Paso 7 = deportes (índice 6). Si el usuario ya eligió gimnasio,
+    // saltamos el paso 8 (complemento gimnasio) automáticamente.
+    if (numeroPaso == 7 && _eligioGimnasio(_deportes)) {
+      _complementoGimnasio = 'Ya entreno en gimnasio';
+      if (_pasoActual + 2 < pasos.length) {
+        _pasoActual += 2;
+        notifyListeners();
+      } else {
+        await _generarPerfilCompleto();
+      }
+      return;
+    }
+
     if (_pasoActual < pasos.length - 1) {
       _pasoActual++;
       notifyListeners();
     } else {
       await _generarPerfilCompleto();
     }
+  }
+
+  static bool _eligioGimnasio(List<String> deportes) {
+    const deportesGimnasio = [
+      'gimnasio',
+      'gym',
+      'crossfit',
+      'musculación',
+      'musculacion',
+      'entrenamiento de fuerza',
+      'powerlifting',
+      'bodybuilding',
+      'calistenia',
+    ];
+    return deportes.any(
+      (d) => deportesGimnasio.any((g) => d.toLowerCase().contains(g)),
+    );
   }
 
   void _guardarRespuesta(int numeroPaso, String valor) {

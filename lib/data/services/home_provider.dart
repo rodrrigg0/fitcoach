@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' show min;
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,7 +66,23 @@ class HomeProvider extends ChangeNotifier {
     return _planEntrenamiento!.semana[DateTime.now().weekday - 1];
   }
 
-  List<Meal> get comidasHoy => _planNutricion?.comidas ?? [];
+  static const _kDiasEspanol = [
+    'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'
+  ];
+
+  List<Meal> get comidasHoy {
+    if (_planNutricion == null) return [];
+    final diasList = _planNutricion!.dias;
+    if (diasList.isNotEmpty) {
+      final hoy = _kDiasEspanol[DateTime.now().weekday - 1];
+      for (final dia in diasList) {
+        if (dia.diaSemana == hoy) return dia.comidas;
+      }
+      final idx = (DateTime.now().weekday - 1).clamp(0, diasList.length - 1);
+      return diasList[idx].comidas;
+    }
+    return _planNutricion!.comidas;
+  }
 
   int get caloriasConsumidas =>
       _planNutricion?.caloriasConsumidas ?? 0;
@@ -272,25 +289,36 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prompt = _buildWorkoutPrompt();
+      debugPrint('=== GENERANDO PLAN DE ENTRENAMIENTO ===');
       final respuesta = await _ai.enviarMensaje(
         historial: const [],
-        mensajeUsuario: prompt,
-        systemPrompt:
-            'Eres un entrenador personal experto. Responde SOLO con JSON válido, sin texto adicional ni bloques de código.',
-        maxTokens: 4000,
+        mensajeUsuario: 'Genera el plan ahora.',
+        systemPrompt: _buildWorkoutSystemPrompt(),
+        maxTokens: 6000,
       );
 
+      debugPrint('=== RESPUESTA IA (primeros 500 chars): ${respuesta.substring(0, min(500, respuesta.length))}');
+      debugPrint('=== PARSEANDO JSON ===');
+
       final cleanJson = _extraerJson(respuesta);
-      final plan = WorkoutPlan.fromJson(
-          jsonDecode(cleanJson) as Map<String, dynamic>);
+
+      WorkoutPlan plan;
+      try {
+        plan = WorkoutPlan.fromJson(
+            jsonDecode(cleanJson) as Map<String, dynamic>);
+        debugPrint('=== PLAN GENERADO: ${plan.semana.length} días ===');
+      } catch (e) {
+        debugPrint('Error parseando plan: $e');
+        debugPrint('JSON recibido: $cleanJson');
+        _error = 'Error al procesar el plan. Inténtalo de nuevo.';
+        return;
+      }
+
       _planEntrenamiento = plan;
 
-      // Guardar en SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyWorkoutPlan, jsonEncode(plan.toJson()));
 
-      // Guardar en Firestore
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         try {
@@ -314,25 +342,45 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prompt = _buildNutritionPrompt();
+      debugPrint('=== GENERANDO PLAN NUTRICIONAL ===');
+      final systemPrompt = _buildNutritionSystemPrompt();
+      debugPrint('=== SYSTEM PROMPT NUTRICIÓN (primeros 300 chars): ${systemPrompt.substring(0, min(300, systemPrompt.length))}');
+
       final respuesta = await _ai.enviarMensaje(
         historial: const [],
-        mensajeUsuario: prompt,
-        systemPrompt:
-            'Eres un nutricionista deportivo experto. Responde SOLO con JSON válido, sin texto adicional ni bloques de código.',
-        maxTokens: 4000,
+        mensajeUsuario: 'Genera un plan nutricional para 7 días donde CADA DÍA tenga comidas completamente diferentes. Usa distintas proteínas, distintos carbohidratos y distintos métodos de cocción cada día. Sigue estrictamente las reglas de variedad del system prompt.',
+        systemPrompt: systemPrompt,
+        maxTokens: 8000,
+        temperature: 0,
       );
 
+      debugPrint('=== RESPUESTA IA NUTRICIÓN (primeros 500 chars): ${respuesta.substring(0, min(500, respuesta.length))}');
+
       final cleanJson = _extraerJson(respuesta);
-      final plan = MealPlan.fromJson(
-          jsonDecode(cleanJson) as Map<String, dynamic>);
+
+      debugPrint('=== JSON LIMPIO NUTRICIÓN COMPLETO: $cleanJson');
+
+      MealPlan plan;
+      try {
+        plan = MealPlan.fromJson(
+            jsonDecode(cleanJson) as Map<String, dynamic>);
+        debugPrint('=== PLAN NUTRICIONAL GENERADO: ${plan.comidas.length} comidas ===');
+        for (final c in plan.comidas) {
+          debugPrint('  · ${c.tipo} — ${c.nombre} — ${c.calorias} kcal');
+        }
+      } catch (e, stackTrace) {
+        debugPrint('=== ERROR PARSEANDO NUTRICIÓN: $e');
+        debugPrint('=== STACK: $stackTrace');
+        debugPrint('=== JSON RECIBIDO COMPLETO: $cleanJson');
+        _error = 'Error al procesar el plan nutricional. Inténtalo de nuevo.';
+        return;
+      }
+
       _planNutricion = plan;
 
-      // Guardar en SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyMealPlan, jsonEncode(plan.toJson()));
 
-      // Guardar en Firestore
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         try {
@@ -409,47 +457,94 @@ class HomeProvider extends ChangeNotifier {
   // ─── Lista de la compra ─────────────────────────────────────
 
   Future<void> generarListaCompra() async {
-    if (_planNutricion == null || _generandoLista) return;
+    if (_generandoLista) return;
+
+    if (_planNutricion == null) {
+      debugPrint('=== NO HAY PLAN NUTRICIONAL ===');
+      _error = 'Primero genera tu plan nutricional';
+      notifyListeners();
+      return;
+    }
+
     _generandoLista = true;
+    _error = null;
     notifyListeners();
 
     try {
-      final ingredientes = _planNutricion!.comidas
-          .expand((m) => m.ingredientes)
+      debugPrint('=== GENERANDO LISTA COMPRA ===');
+      debugPrint('=== PLAN: ${_planNutricion!.dias.length} días, ${_planNutricion!.comidas.length} comidas ===');
+
+      // Extrae ingredientes de dias primero, luego fallback a comidas planas
+      final todosIngredientes = <String>[];
+      if (_planNutricion!.dias.isNotEmpty) {
+        for (final dia in _planNutricion!.dias) {
+          for (final comida in dia.comidas) {
+            todosIngredientes.addAll(comida.ingredientes);
+          }
+        }
+      } else {
+        for (final comida in _planNutricion!.comidas) {
+          todosIngredientes.addAll(comida.ingredientes);
+        }
+      }
+
+      debugPrint('=== INGREDIENTES EXTRAÍDOS: ${todosIngredientes.length} ===');
+
+      if (todosIngredientes.isEmpty) {
+        _error = 'No se encontraron ingredientes en el plan';
+        _generandoLista = false;
+        notifyListeners();
+        return;
+      }
+
+      // Deduplica y limita para no sobrepasar el límite de tokens
+      final ingredientesLimpios = todosIngredientes
+          .map((i) => i.trim().toLowerCase())
+          .where((i) => i.isNotEmpty)
+          .toSet()
           .toList();
+      final ingredientesParaIA = ingredientesLimpios.take(80).toList();
 
-      final prompt =
-          'Tengo estos ingredientes del plan nutricional diario de un atleta '
-          '(se repite 7 días a la semana): ${ingredientes.join(', ')}. '
-          'Agrupa los ingredientes repetidos, suma las cantidades necesarias '
-          'para 7 días y organízalos por categorías. '
-          'Categorías posibles: Proteínas, Lácteos, Cereales, Frutas, '
-          'Verduras, Grasas, Otros. '
-          'Responde SOLO con JSON: '
-          '{"items":[{"nombre":"Pechuga de pollo","cantidad":"1.5 kg",'
-          '"categoria":"Proteínas"}]}';
+      debugPrint('=== INGREDIENTES ÚNICOS: ${ingredientesLimpios.length} ===');
+      debugPrint('=== ENVIANDO A IA: ${ingredientesParaIA.length} ===');
 
-      final respuesta = await _ai.enviarMensaje(
-        historial: const [],
-        mensajeUsuario: prompt,
-        systemPrompt:
-            'Eres un asistente de nutrición. Responde SOLO con JSON válido sin texto extra.',
-        maxTokens: 2000,
-      );
+      final prompt = '''Agrupa estos ingredientes por categorías para una lista de la compra semanal. Suma cantidades repetidas.
+
+${ingredientesParaIA.join(', ')}
+
+JSON de respuesta (sin texto extra):
+{"items":[{"nombre":"...","cantidad":"...","categoria":"..."}]}
+
+Categorías: Proteínas, Lácteos y huevos, Cereales, Frutas, Verduras, Legumbres, Grasas, Suplementos, Otros''';
+
+      final respuesta = await _ai
+          .enviarMensaje(
+            historial: const [],
+            mensajeUsuario: prompt,
+            systemPrompt:
+                'Eres un asistente de nutrición. Responde ÚNICAMENTE con JSON válido sin texto adicional ni markdown.',
+            maxTokens: 4000,
+          )
+          .timeout(const Duration(seconds: 30));
+
+      debugPrint('=== RESPUESTA LISTA (primeros 200 chars): ${respuesta.substring(0, respuesta.length.clamp(0, 200))} ===');
 
       final jsonStr = _extraerJson(respuesta);
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-      final items = (data['items'] as List<dynamic>)
+      _listaCompra = (data['items'] as List<dynamic>)
           .map((e) => ShoppingItem.fromJson(e as Map<String, dynamic>))
           .toList();
-      _listaCompra = items;
+
+      debugPrint('=== LISTA GENERADA: ${_listaCompra.length} items ===');
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
           _keyListaCompra,
           jsonEncode(_listaCompra.map((i) => i.toJson()).toList()));
-    } catch (e) {
-      debugPrint('HomeProvider: error generando lista compra: $e');
+    } catch (e, stack) {
+      debugPrint('=== ERROR LISTA COMPRA: $e ===');
+      debugPrint('=== STACK: $stack ===');
+      _error = 'Error al generar la lista. Inténtalo de nuevo.';
     } finally {
       _generandoLista = false;
       notifyListeners();
@@ -546,46 +641,46 @@ class HomeProvider extends ChangeNotifier {
 
   // ─── Helpers privados ──────────────────────────────────────
 
-  String _buildWorkoutPrompt() {
+  String _buildWorkoutSystemPrompt() {
     final p = _perfil!;
-    return '''Genera un plan de entrenamiento semanal en JSON para este perfil:
-- Nombre: ${p.nombre}, ${p.edad} años, ${p.sexo}
-- Peso: ${p.peso} kg, Altura: ${p.altura} cm
-- Objetivo: ${p.objetivo}
-- Deportes: ${p.deportes.join(', ')}
-- Días de entrenamiento: ${p.diasEntrenamiento} días/semana
-- Duración sesión: ${p.minutosSesion} minutos
-- Lugar habitual: ${p.lugarEntrenamiento}
-- Lesiones: ${p.lesiones.isEmpty ? 'Ninguna' : p.lesiones}
-- Dieta: ${p.tipoDieta}
-- Suplementos: ${p.suplementosActuales.isEmpty ? 'Ninguno' : p.suplementosActuales.join(', ')}
+    return '''Eres un preparador físico de élite con doctorado en Ciencias del Deporte y 20 años de experiencia en rendimiento deportivo. Genera planes de entrenamiento basados en periodización científica y fisiología del ejercicio.
 
-El plan debe tener exactamente ${p.diasEntrenamiento} días de entrenamiento y ${7 - p.diasEntrenamiento} días de descanso distribuidos inteligentemente.
+PERFIL DEL ATLETA:
+Nombre: ${p.nombre} | Edad: ${p.edad} años | Sexo: ${p.sexo}
+Peso: ${p.peso} kg | Altura: ${p.altura} cm
+Deportes: ${p.deportes.join(', ')}
+Objetivo: ${p.objetivo}
+Días de entrenamiento: ${p.diasEntrenamiento}/semana | Duración sesión: ${p.minutosSesion} min
+Lugar habitual: ${p.lugarEntrenamiento}
+Lesiones/restricciones: ${p.lesiones.isEmpty ? 'Ninguna' : p.lesiones}
+Suplementos: ${p.suplementosActuales.isEmpty ? 'Ninguno' : p.suplementosActuales.join(', ')}
 
-Si el usuario hace deporte + gimnasio como complemento, alterna los días de forma que el gimnasio no interfiera con el deporte principal. El gimnasio debe enfocarse en los músculos complementarios al deporte.
+PRINCIPIOS QUE DEBES APLICAR:
+1. PERIODIZACIÓN SEMANAL: Distribuye Alta/Media/Baja intensidad. Nunca 2 sesiones de alta intensidad consecutivas. Post-alta intensidad debe ser baja o descanso.
+2. ESPECIFICIDAD DEPORTIVA:
+   - Natación: técnica de estilos, series de velocidad (25-50m), series de resistencia (200-400m), trabajo de patada y brazada
+   - Fútbol/deportes de equipo: sprints cortos (10-30m), cambios de dirección, resistencia aeróbica intermitente, potencia
+   - Running: rodaje suave Z2, intervalos (400m-1km), tempo run, fartlek, tirada larga progresiva
+   - Ciclismo: rodaje base Z2, sweet spot 88-93% FTP, bloques VO2max, sprints neuromusculares
+   - Artes marciales/boxeo: rounds trabajo/descanso (3min/1min), work capacity, potencia explosiva
+   - Gimnasio: RIR system, hipertrofia 8-12 reps @RIR2, fuerza 3-6 @RIR1, resistencia muscular 15-20 @RIR3
+3. COMPLEMENTARIEDAD GIMNASIO-DEPORTE: Gym trabaja músculos antagonistas/complementarios al deporte. NUNCA el mismo grupo muscular principal el día previo al deporte principal.
+4. TEMPO Y RIR: En fuerza, usa formato "NxN @RIRN" en el campo "series". Ej: "4x8 @RIR2 | tempo 2-0-2 | descanso 90s".
+5. GESTIÓN DE LESIONES: Con lesiones activas, sustituye movimientos contraindicados por alternativas seguras. Menciona explícitamente la adaptación.
+6. PROGRESIÓN: En "consejo", explica cómo progresar la semana siguiente (más peso, menos RIR, más volumen).
 
-Para cada día de entrenamiento incluye:
-- tipo: "deporte" o "gimnasio" o "descanso"
-- titulo: nombre de la sesión
-- descripcion: 1 frase de qué se trabaja
-- duracion: minutos
-- lugar: donde se hace
-- ejercicios: lista con nombre, series/reps o distancia/tiempo según el deporte
-- porQueHoy: párrafo explicando por qué este entrenamiento este día concreto
-- objetivos: lista de 3 puntos de enfoque
-- consejo: tip específico para esa sesión
-- caracteristicas: lista de 3-4 pills descriptivos
+FORMATO JSON — Responde SOLO con este JSON válido:
+{"semana":[{"tipo":"deporte|gimnasio|descanso","titulo":"...","descripcion":"...","duracion":60,"lugar":"...","ejercicios":[{"nombre":"...","series":"4x8 @RIR2 | tempo 2-0-2 | descanso 90s","duracion":null,"distancia":null}],"porQueHoy":"...","objetivos":["...","...","..."],"consejo":"...","caracteristicas":["...","...","..."],"completado":false}],"notaDistribucion":"..."}
 
-Para la distribución semanal incluye:
-- notaDistribucion: párrafo explicando la lógica de distribución de los días
-
-Estructura exacta:
-{"semana":[{"tipo":"deporte|gimnasio|descanso","titulo":"...","descripcion":"...","duracion":45,"lugar":"...","ejercicios":[{"nombre":"...","series":"4x12","duracion":null,"distancia":null}],"porQueHoy":"...","objetivos":["..."],"consejo":"...","caracteristicas":["..."],"completado":false}],"notaDistribucion":"..."}
-
-Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Responde SOLO con JSON válido, sin texto extra.''';
+REGLAS CRÍTICAS:
+- Exactamente 7 días: índice 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
+- Exactamente ${p.diasEntrenamiento} días activos + ${7 - p.diasEntrenamiento} días de descanso/recuperación
+- Fuerza: "series" con texto descriptivo incluyendo RIR, "duracion":null, "distancia":null
+- Cardio/deporte: "series" descriptivo, usa "duracion" en minutos o "distancia" en metros/km
+- Responde ÚNICO bloque JSON sin ningún texto adicional''';
   }
 
-  String _buildNutritionPrompt() {
+  String _buildNutritionSystemPrompt() {
     final p = _perfil!;
     final int cals;
     final int proteinas;
@@ -602,19 +697,104 @@ Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Responde SOLO con JSON 
       carbos = ((cals * 0.45) / 4).round();
       grasas = ((cals * 0.25) / 9).round();
     }
-    return '''Genera un plan nutricional diario en JSON con esta estructura exacta:
+    return '''Eres un nutricionista deportivo de élite especializado en periodización nutricional y fisiología del rendimiento. Diseña planes nutricionales científicos basados en el perfil y objetivos del atleta.
+
+REGLA NÚMERO 1 — VARIEDAD ABSOLUTA:
+Cada día de la semana DEBE tener comidas completamente diferentes. Está PROHIBIDO repetir el mismo plato en dos días distintos.
+
+VERIFICACIÓN OBLIGATORIA antes de responder:
+- Lunes desayuno ≠ Martes desayuno ≠ Miércoles desayuno ≠ Jueves... ≠ Viernes... ≠ Sábado... ≠ Domingo
+- Lunes almuerzo ≠ Martes almuerzo ≠ Miércoles almuerzo ≠ ... (todos distintos)
+- Lunes cena ≠ Martes cena ≠ Miércoles cena ≠ ... (todos distintos)
+- Usar mínimo 5 proteínas distintas en la semana (pollo, huevo, pescado, legumbres, pavo, ternera, marisco...)
+- Usar mínimo 4 carbohidratos distintos (arroz, pasta, avena, pan, boniato, quinoa, legumbres, patata...)
+- Usar mínimo 3 métodos de cocción distintos (plancha, horno, vapor, crudo, salteado, pochado...)
+- Usar mínimo 2 patrones culturales distintos (mediterráneo, asiático, mexicano, nórdico...)
+
+EJEMPLO DE VARIEDAD CORRECTA:
+
+Desayunos (todos distintos):
+Lunes: Avena con yogur griego, plátano y nueces
+Martes: Tortilla de 3 huevos con espinacas y tomate
+Miércoles: Pan de centeno con queso cottage y aguacate
+Jueves: Smoothie proteico con avena, fresas y almendras
+Viernes: Yogur griego con granola casera y arándanos
+Sábado: Tostadas integrales con sardinas y pimiento
+Domingo: Gachas de avena con canela, miel y pistachos
+
+Almuerzos (todos distintos):
+Lunes: Pollo a la plancha con arroz integral y brócoli
+Martes: Lentejas estofadas con verduras y pan integral
+Miércoles: Salmón al horno con boniato y judías verdes
+Jueves: Pasta integral con atún, tomate y aceitunas
+Viernes: Ensalada de garbanzos con pavo y aguacate
+Sábado: Arroz con pollo al curry y espinacas salteadas
+Domingo: Merluza al vapor con quinoa y pimiento asado
+
+Cenas (todas distintas):
+Lunes: Revuelto de claras con champiñones y tostada
+Martes: Pechuga de pavo a la plancha con ensalada verde
+Miércoles: Sopa de verduras con huevo pochado
+Jueves: Tortilla de patata ligera con ensalada verde
+Viernes: Bacalao al horno con brócoli y patata
+Sábado: Bol de yogur griego con frutos secos y miel
+Domingo: Crema de calabaza con pollo desmenuzado
+
+PROHIBIDO:
+- El mismo plato en dos días diferentes
+- El mismo desayuno más de una vez por semana
+- Más de 2 comidas con el mismo tipo de proteína en el mismo día
+
+PERFIL DEL ATLETA:
+Nombre: ${p.nombre} | Edad: ${p.edad} años | Sexo: ${p.sexo}
+Peso: ${p.peso} kg | Altura: ${p.altura} cm
+Objetivo: ${p.objetivo}
+Deportes: ${p.deportes.join(', ')} | Días entrenamiento: ${p.diasEntrenamiento}/semana
+Tipo de dieta: ${p.tipoDieta}
+Alergias/intolerancias: ${p.alergias.isEmpty ? 'Ninguna' : p.alergias.join(', ')}
+Presupuesto semanal: ${p.presupuestoSemanal}€
+Suplementos activos: ${p.suplementosActuales.isEmpty ? 'Ninguno' : p.suplementosActuales.join(', ')}
+
+OBJETIVOS NUTRICIONALES:
+Calorías: $cals kcal/día
+Proteínas: ${proteinas}g | Carbohidratos: ${carbos}g | Grasas: ${grasas}g
+
+PRINCIPIOS DE NUTRICIÓN DEPORTIVA:
+1. TIMING DE NUTRIENTES: Pre-entreno (1-2h antes): carbos medio-bajo IG + proteína moderada. Post-entreno (dentro de 60min): 20-40g proteína de alta biodisponibilidad + carbos alto IG para reposición de glucógeno.
+2. DISTRIBUCIÓN PROTEICA: Distribuye proteína en todas las tomas (umbral leucina: >2-3g/toma). Prioriza fuentes completas: huevo, pollo, pescado, lácteos, legumbres + cereal combinado.
+3. CARBOHIDRATOS: Mayor carga peri-entrenamiento. Para pérdida de peso: carbos principalmente en torno al entreno. Para ganancia muscular: distribución más uniforme.
+4. CALIDAD DE GRASAS: Incluye omega-3 (salmón, sardinas, nueces, chía), monoinsaturadas (aguacate, aceite de oliva). Limita grasas saturadas.
+5. VARIEDAD: Cada comida usa diferente fuente proteica principal y diferente base de carbohidratos. Sin platos repetidos.
+6. MICRONUTRIENTES: Verduras y/o frutas variadas en al menos 3 comidas para cubrir vitaminas, minerales y fibra.
+7. PRESUPUESTO: Con ${p.presupuestoSemanal}€/semana, prioriza proteínas económicas (huevo, legumbres, pollo, atún en lata) si el presupuesto es ajustado.
+
+VERIFICACIÓN DE VARIEDAD OBLIGATORIA:
+Antes de generar el JSON, verifica mentalmente:
+- ¿Cada comida usa una fuente proteica distinta (pollo, huevo, pescado, legumbre, lácteos...)?
+- ¿Se usan al menos 3 métodos de cocción distintos (plancha, horno, vapor, crudo, salteado)?
+- ¿Se incluyen al menos 2 tipos de carbohidratos distintos (arroz, pasta, legumbres, pan, boniato, quinoa)?
+- ¿Las verduras varían entre comidas?
+Si alguna respuesta es NO, cambia los platos hasta que todas sean SÍ.
+
+EJEMPLOS DE VARIEDAD CORRECTA:
+Desayuno: Avena con yogur griego y plátano / Tortilla de 3 huevos con espinacas / Pan integral con aguacate y sardinas
+Almuerzo: Pollo a la plancha con arroz integral y brócoli / Lentejas estofadas con verduras / Salmón al horno con boniato
+Cena: Merluza al vapor con quinoa y pimiento / Pechuga de pavo con patata y judías verdes / Ensalada de garbanzos con atún
+Snack: Yogur griego con nueces / Queso cottage con fruta / Tostada de centeno con mantequilla de cacahuete
+
+FORMATO JSON EXACTO — Responde SOLO con este JSON:
 {
   "comidas": [
     {
       "tipo": "desayuno|almuerzo|cena|snack",
-      "nombre": "Nombre del plato",
+      "nombre": "Nombre descriptivo del plato",
       "calorias": 400,
       "proteinas": 30.0,
       "carbohidratos": 45.0,
       "grasas": 12.0,
       "hora": "08:00",
-      "ingredientes": ["100g pechuga de pollo", "80g arroz integral"],
-      "preparacion": "Instrucciones breves de preparación",
+      "ingredientes": ["100g pechuga de pollo", "80g arroz integral", "1 cucharada aceite de oliva"],
+      "preparacion": "Instrucciones prácticas en 2-3 pasos concretos",
       "completada": false
     }
   ],
@@ -624,21 +804,32 @@ Genera exactamente 7 días (índice 0=Lunes, 6=Domingo). Responde SOLO con JSON 
   "grasasObjetivo": $grasas
 }
 
-Perfil:
-- Objetivo: ${p.objetivo}
-- Dieta: ${p.tipoDieta}
-- Alergias: ${p.alergias.isEmpty ? 'Ninguna' : p.alergias.join(', ')}
-- Presupuesto semanal: ${p.presupuestoSemanal}€
-- Suplementos: ${p.suplementosActuales.isEmpty ? 'Ninguno' : p.suplementosActuales.join(', ')}
-
-Incluye desayuno, almuerzo, cena y 1-2 snacks. Total: ~$cals kcal.''';
+REGLAS CRÍTICAS:
+- Incluye exactamente: 1 desayuno + 1 almuerzo + 1 cena + 1-2 snacks (total 3-5 comidas)
+- Suma de calorías de todas las comidas: entre ${(cals * 0.93).round()} y ${(cals * 1.07).round()} kcal
+- Usa "carbohidratos" (no "carbos"), usa "preparacion" (no "receta")
+- El array "comidas" va directamente en la raíz del JSON (no dentro de "dias" ni sub-objetos)
+- Adapta TODOS los ingredientes a la dieta "${p.tipoDieta}" y evita TODAS las alergias indicadas
+- Responde ÚNICO bloque JSON sin texto adicional''';
   }
 
   String _extraerJson(String texto) {
-    final jsonStart = texto.indexOf('{');
-    final jsonEnd = texto.lastIndexOf('}');
-    if (jsonStart == -1 || jsonEnd == -1) return texto;
-    return texto.substring(jsonStart, jsonEnd + 1);
+    String jsonStr = texto.trim();
+
+    if (jsonStr.contains('```json')) {
+      jsonStr = jsonStr.split('```json').last.split('```').first.trim();
+    } else if (jsonStr.contains('```')) {
+      final parts = jsonStr.split('```');
+      if (parts.length >= 2) jsonStr = parts[1].trim();
+    }
+
+    final startIdx = jsonStr.indexOf('{');
+    final endIdx = jsonStr.lastIndexOf('}');
+    if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+      jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+    }
+
+    return jsonStr;
   }
 
   // ─── Chat context ──────────────────────────────────────────

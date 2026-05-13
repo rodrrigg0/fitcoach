@@ -274,19 +274,19 @@ class SessionDetailScreen extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (ej.series != null ||
-                          ej.duracion != null ||
+                      if (ej.detalle.isNotEmpty ||
+                          ej.duracion.isNotEmpty ||
                           ej.distancia != null)
                         const SizedBox(height: 3),
-                      if (ej.series != null)
+                      if (ej.detalle.isNotEmpty)
                         Text(
-                          ej.series!,
+                          ej.detalle,
                           style: const TextStyle(
                               color: AppColors.textSecondary, fontSize: 12),
                         ),
-                      if (ej.duracion != null)
+                      if (ej.duracion.isNotEmpty)
                         Text(
-                          ej.duracion!,
+                          ej.duracion,
                           style: const TextStyle(
                               color: AppColors.textSecondary, fontSize: 12),
                         ),

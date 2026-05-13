@@ -193,6 +193,35 @@ ESTILO:
 - Máximo 5 párrafos o 7 items en lista
 - Tono: profesional, directo, motivador''');
 
+    sb.writeln();
+    sb.writeln('''CONOCIMIENTO TÉCNICO AVANZADO:
+
+PERIODIZACIÓN Y CARGA:
+- RIR (Reps In Reserve): reps que quedan antes del fallo. RIR0=fallo, RIR2=2 reps antes. Hipertrofia: RIR1-3; Fuerza máxima: RIR0-1.
+- RPE (Rate of Perceived Exertion): escala 1-10. RPE8=RIR2, RPE9=RIR1, RPE10=fallo. Equivalentes intercambiables.
+- Tempo: formato A-B-C. A=eccéntrico (s), B=pausa isométrica, C=concéntrico (s). Ej: 3-1-2 = 3s bajada, 1s pausa, 2s subida.
+- Mesociclos: bloques de 3-6 semanas con objetivo específico. Secuencia típica: acumulación → intensificación → realización → deload.
+- Deload: reducción de volumen 40-60% manteniendo intensidad. Cada 4-8 semanas según nivel y acumulación de fatiga.
+- Principio de sobrecarga progresiva: para generar adaptación, la carga debe aumentar progresivamente (más peso, más volumen, menos RIR, menos descanso).
+
+SUPLEMENTACIÓN — NIVELES DE EVIDENCIA:
+- NIVEL A (evidencia sólida, recomendables): creatina monohidrato 3-5g/día (fuerza, potencia, recuperación), cafeína 3-6mg/kg 30-60min pre-entreno (rendimiento aeróbico y anaeróbico), beta-alanina 3.2-6.4g/día fraccionado (resistencia muscular >60s), bicarbonato sódico 0.3g/kg pre-entreno (deportes de alta intensidad corta duración).
+- NIVEL B (evidencia moderada): proteína whey/caseína (si no se alcanza objetivo proteico dietético), omega-3 2-3g EPA+DHA/día (reducción inflamación, recuperación), vitamina D3 1000-2000 UI/día si hay deficiencia comprobada, magnesio si hay déficit.
+- NIVEL C (evidencia débil o contextual): BCAAs (superfluos si ingesta proteica total es adecuada ≥1.6g/kg), HMB (solo en atletas no entrenados o en déficit calórico severo), glutamina.
+- SIN EVIDENCIA RELEVANTE: la mayoría de quemadores de grasa, testosterona boosters, "pre-workouts" con ingredientes propietarios no dosificados.
+
+RECUPERACIÓN Y LESIONES:
+- Protocolo POLICE para lesiones agudas (primeras 72h): Protección, Carga Óptima (movimiento sin dolor), Ice/Hielo 10-20min cada 2h, Compresión, Elevación.
+- Señales de sobreentrenamiento funcional vs no-funcional: FC reposo +5-7 bpm sostenida, VFC reducida, rendimiento en descenso >2 semanas consecutivas, alteraciones del sueño, irritabilidad, infecciones frecuentes. Requiere reducción de carga o deload inmediato.
+- Ventana anabólica post-entreno: proteína de calidad dentro de las 2h es suficiente en atletas que comen bien. Urgencia real solo en entrenos en ayunas o >2h de duración.
+- Sueño: 7-9h mínimo. Es el factor de recuperación más importante. Deficit de sueño reduce síntesis proteica, aumenta cortisol y deteriora rendimiento más que cualquier suplemento lo mejora.
+
+FISIOLOGÍA DEL RENDIMIENTO:
+- VO2max: capacidad aeróbica máxima. Mejora con intervalos Z4-Z5 (95-100% VO2max) y volumen Z2 extenso.
+- Umbral láctico LT2 / FTP: intensidad máxima sostenible ~60min. Se mejora con work a sweet spot (88-93% FTP) y bloques tempo (95-105% FTP).
+- Hipertrofia muscular: requiere tensión mecánica + estrés metabólico + daño muscular. Rango efectivo amplio: 5-30 reps con proximidad al fallo (RIR0-3). Volumen semanal efectivo: 10-20 series por grupo muscular.
+- Potencia: producto de fuerza × velocidad. Se desarrolla con ejercicios explosivos a baja carga (30-70% 1RM), pliometría y sprints. Requiere estado de frescura (no en fatiga acumulada).''');
+
     return sb.toString();
   }
 

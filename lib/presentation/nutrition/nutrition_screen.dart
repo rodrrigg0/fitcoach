@@ -184,7 +184,36 @@ class NutritionScreen extends StatelessWidget {
 
   // ── TAB SEMANA ───────────────────────────────────────────────
 
+  static const _kDiasEspanol = [
+    'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'
+  ];
+
+  bool _esHoy(String diaSemana) =>
+      diaSemana == _kDiasEspanol[DateTime.now().weekday - 1];
+
   Widget _buildTabSemana(BuildContext context, HomeProvider provider) {
+    final plan = provider.planNutricion!;
+
+    // Estructura nueva: cada día tiene sus propias comidas
+    if (plan.dias.isNotEmpty) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.only(top: 8, bottom: 24),
+        child: Column(
+          children: plan.dias.asMap().entries.map((e) {
+            final dia = e.value;
+            return _DayMealCard(
+              key: ValueKey<int>(e.key),
+              diaSemana: dia.diaSemana,
+              comidas: dia.comidas,
+              isHoy: _esHoy(dia.diaSemana),
+              onTapMeal: (meal) => showMealDetailSheet(context, meal),
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    // Fallback: estructura plana antigua
     final l10n = AppLocalizations.of(context)!;
     final diasNombre = [
       l10n.nutritionDayMon,
@@ -195,9 +224,7 @@ class NutritionScreen extends StatelessWidget {
       l10n.nutritionDaySat,
       l10n.nutritionDaySun,
     ];
-    final comidas = provider.planNutricion!.comidas;
     final hoyIdx = DateTime.now().weekday - 1;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       child: Column(
@@ -206,7 +233,7 @@ class NutritionScreen extends StatelessWidget {
           (i) => _DayMealCard(
             key: ValueKey<int>(i),
             diaSemana: diasNombre[i],
-            comidas: comidas,
+            comidas: plan.comidas,
             isHoy: i == hoyIdx,
             onTapMeal: (meal) => showMealDetailSheet(context, meal),
           ),

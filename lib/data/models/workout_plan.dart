@@ -1,27 +1,44 @@
 class Exercise {
   final String nombre;
-  final String? series;
-  final String? duracion;
+  final String detalle;
+  final String duracion;
+  final String? notas;
   final String? distancia;
 
   const Exercise({
     required this.nombre,
-    this.series,
-    this.duracion,
+    this.detalle = '',
+    this.duracion = '',
+    this.notas,
     this.distancia,
   });
 
-  factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
-        nombre: json['nombre'] as String? ?? '',
-        series: json['series'] as String?,
-        duracion: json['duracion'] as String?,
-        distancia: json['distancia'] as String?,
-      );
+  factory Exercise.fromJson(Map<String, dynamic> json) {
+    final detalle = json['detalle']?.toString()
+        ?? json['series']?.toString()
+        ?? '';
+
+    final durVal = json['duracion'];
+    String duracion = '';
+    if (durVal != null) {
+      final s = durVal.toString();
+      duracion = int.tryParse(s) != null ? '$s min' : s;
+    }
+
+    return Exercise(
+      nombre: json['nombre']?.toString() ?? '',
+      detalle: detalle,
+      duracion: duracion,
+      notas: json['notas']?.toString(),
+      distancia: json['distancia']?.toString(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'nombre': nombre,
-        if (series != null) 'series': series,
-        if (duracion != null) 'duracion': duracion,
+        if (detalle.isNotEmpty) 'detalle': detalle,
+        if (duracion.isNotEmpty) 'duracion': duracion,
+        if (notas != null) 'notas': notas,
         if (distancia != null) 'distancia': distancia,
       };
 }
@@ -56,27 +73,29 @@ class WorkoutDay {
   bool get esDescanso => tipo == 'descanso';
 
   factory WorkoutDay.fromJson(Map<String, dynamic> json) => WorkoutDay(
-        tipo: json['tipo'] as String? ?? 'descanso',
-        titulo: json['titulo'] as String? ?? 'Descanso',
-        descripcion: json['descripcion'] as String? ?? '',
-        duracion: (json['duracion'] as num?)?.toInt() ?? 0,
-        lugar: json['lugar'] as String? ?? '',
+        tipo: json['tipo']?.toString() ?? 'descanso',
+        titulo: json['titulo']?.toString() ?? '',
+        descripcion: json['descripcion']?.toString() ?? '',
+        duracion: json['duracion'] != null
+            ? int.tryParse(json['duracion'].toString()) ?? 0
+            : 0,
+        lugar: json['lugar']?.toString() ?? '',
         ejercicios: (json['ejercicios'] as List<dynamic>?)
                 ?.map((e) =>
                     Exercise.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
-        porQueHoy: json['porQueHoy'] as String? ?? '',
+        porQueHoy: json['porQueHoy']?.toString() ?? '',
         objetivos: (json['objetivos'] as List<dynamic>?)
-                ?.map((e) => e.toString())
+                ?.map((e) => e?.toString() ?? '')
                 .toList() ??
             [],
-        consejo: json['consejo'] as String? ?? '',
+        consejo: json['consejo']?.toString() ?? '',
         caracteristicas: (json['caracteristicas'] as List<dynamic>?)
-                ?.map((e) => e.toString())
+                ?.map((e) => e?.toString() ?? '')
                 .toList() ??
             [],
-        completado: json['completado'] as bool? ?? false,
+        completado: json['completado'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -161,9 +180,9 @@ class WorkoutPlan {
     }
     return WorkoutPlan(
       semana: semana.take(7).toList(),
-      notaDistribucion: json['notaDistribucion'] as String? ?? '',
+      notaDistribucion: json['notaDistribucion']?.toString() ?? '',
       fechaGeneracion: json['fechaGeneracion'] != null
-          ? DateTime.tryParse(json['fechaGeneracion'] as String) ??
+          ? DateTime.tryParse(json['fechaGeneracion'].toString()) ??
               DateTime.now()
           : DateTime.now(),
     );

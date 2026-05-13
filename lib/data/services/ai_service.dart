@@ -13,6 +13,7 @@ class AIService {
     required String mensajeUsuario,
     required String systemPrompt,
     int maxTokens = 1024,
+    double? temperature,
   }) async {
     final apiKey = dotenv.env['ANTHROPIC_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -43,6 +44,7 @@ class AIService {
       body: jsonEncode({
         'model': _model,
         'max_tokens': maxTokens,
+        'temperature': ?temperature,
         'system': systemPrompt,
         'messages': messages,
       }),
