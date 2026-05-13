@@ -10,7 +10,7 @@ import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/models/shopping_item.dart';
 import 'package:fitcoach/data/models/weight_log.dart';
-import 'package:fitcoach/data/services/ai_service.dart';
+import 'package:fitcoach/data/services/ai_service.dart' show AIService, AIModels;
 import 'package:fitcoach/data/services/firestore_service.dart';
 
 class HomeProvider extends ChangeNotifier {
@@ -282,8 +282,19 @@ class HomeProvider extends ChangeNotifier {
 
   // ─── Generar planes ────────────────────────────────────────
 
-  Future<void> generarPlanEntrenamiento() async {
+  Future<void> generarPlanEntrenamiento({bool forzar = false}) async {
     if (_perfil == null || _cargandoPlan) return;
+
+    if (!forzar && _planEntrenamiento != null) {
+      final dias = DateTime.now()
+          .difference(_planEntrenamiento!.fechaGeneracion)
+          .inDays;
+      if (dias < 28) {
+        debugPrint('Plan entrenamiento reciente ($dias días), usando el existente');
+        return;
+      }
+    }
+
     _cargandoPlan = true;
     _error = null;
     notifyListeners();
@@ -295,6 +306,7 @@ class HomeProvider extends ChangeNotifier {
         mensajeUsuario: 'Genera el plan ahora.',
         systemPrompt: _buildWorkoutSystemPrompt(),
         maxTokens: 6000,
+        modelo: AIModels.opus,
       );
 
       debugPrint('=== RESPUESTA IA (primeros 500 chars): ${respuesta.substring(0, min(500, respuesta.length))}');
@@ -335,8 +347,19 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> generarPlanNutricion() async {
+  Future<void> generarPlanNutricion({bool forzar = false}) async {
     if (_perfil == null || _cargandoNutricion) return;
+
+    if (!forzar && _planNutricion != null) {
+      final dias = DateTime.now()
+          .difference(_planNutricion!.fechaGeneracion)
+          .inDays;
+      if (dias < 28) {
+        debugPrint('Plan nutricional reciente ($dias días), usando el existente');
+        return;
+      }
+    }
+
     _cargandoNutricion = true;
     _error = null;
     notifyListeners();
@@ -352,6 +375,7 @@ class HomeProvider extends ChangeNotifier {
         systemPrompt: systemPrompt,
         maxTokens: 8000,
         temperature: 0,
+        modelo: AIModels.opus,
       );
 
       debugPrint('=== RESPUESTA IA NUTRICIÓN (primeros 500 chars): ${respuesta.substring(0, min(500, respuesta.length))}');
@@ -524,6 +548,7 @@ Categorías: Proteínas, Lácteos y huevos, Cereales, Frutas, Verduras, Legumbre
             systemPrompt:
                 'Eres un asistente de nutrición. Responde ÚNICAMENTE con JSON válido sin texto adicional ni markdown.',
             maxTokens: 4000,
+            modelo: AIModels.haiku,
           )
           .timeout(const Duration(seconds: 30));
 

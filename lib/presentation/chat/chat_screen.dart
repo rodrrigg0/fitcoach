@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
+import 'package:fitcoach/core/utils/usage_tracker.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 import 'package:fitcoach/data/services/chat_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
@@ -72,6 +73,30 @@ class _ChatScreenState extends State<ChatScreen> {
           body: SafeArea(
             child: Column(
               children: [
+                FutureBuilder<int>(
+                  future: UsageTracker.mensajesRestantesHoy(),
+                  builder: (context, snapshot) {
+                    final restantes = snapshot.data ?? UsageTracker.maxMensajesChat;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            '$restantes mensajes restantes hoy',
+                            style: TextStyle(
+                              color: restantes > 5
+                                  ? const Color(0xFF888888)
+                                  : const Color(0xFFFF8800),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
                 Expanded(
                   child: chat.tieneHistorial
                       ? _buildMessageList(chat)

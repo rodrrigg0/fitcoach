@@ -8,6 +8,7 @@ import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/services/ai_service.dart';
 import 'package:fitcoach/data/services/firestore_service.dart';
+import 'package:fitcoach/core/utils/usage_tracker.dart';
 
 class ChatProvider extends ChangeNotifier {
   static const _keyPerfil = 'user_profile';
@@ -107,120 +108,51 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─── System prompt ──────────────────────────────────────────
+  // ─── System prompt (comprimido) ─────────────────────────────
 
   String get _systemPrompt {
-    final sb = StringBuffer();
     final p = _perfil;
+    final sb = StringBuffer();
 
-    sb.writeln(
-        'Eres el mejor entrenador personal del mundo con 20 años entrenando '
-        'atletas de élite. Doctorado en Ciencias del Deporte. Especialista en '
-        'nutrición deportiva y farmacología deportiva.');
-    sb.writeln();
-    sb.writeln('PERFIL DEL ATLETA:');
-    sb.writeln('Nombre: ${p?.nombre ?? '-'}');
-    sb.writeln('Edad: ${p?.edad ?? '-'} años · Sexo: ${p?.sexo ?? '-'}');
-    sb.writeln('Peso: ${p?.peso ?? '-'} kg · Altura: ${p?.altura ?? '-'} cm');
-    sb.writeln('Deporte: ${p?.deportes.join(', ') ?? '-'}');
-    sb.writeln('Objetivo: ${p?.objetivo ?? '-'}');
-    sb.writeln('Dieta: ${p?.tipoDieta ?? '-'}');
-    sb.writeln(
-        'Alergias: ${(p?.alergias.isEmpty ?? true) ? 'Ninguna' : p!.alergias.join(', ')}');
-    sb.writeln(
-        'Lesiones: ${(p?.lesiones.isEmpty ?? true) ? 'Ninguna' : p!.lesiones}');
-    sb.writeln(
-        'Suplementos: ${(p?.suplementosActuales.isEmpty ?? true) ? 'Ninguno' : p!.suplementosActuales.join(', ')}');
-    sb.writeln(
-        'Días/semana: ${p?.diasEntrenamiento ?? '-'} · Min/sesión: ${p?.minutosSesion ?? '-'}');
-    sb.writeln();
+    sb.write('Eres el entrenador personal de ${p?.nombre ?? 'el atleta'}. '
+        'Experto en Ciencias del Deporte, nutrición deportiva y farmacología deportiva.\n\n');
+
+    sb.write('ATLETA: ${p?.nombre ?? '-'}, ${p?.edad ?? '-'}a, ${p?.sexo ?? '-'}, '
+        '${p?.peso ?? '-'}kg, ${p?.altura ?? '-'}cm\n');
+    sb.write('DEPORTE: ${p?.deportes.join('+') ?? '-'} | OBJ: ${p?.objetivo ?? '-'}\n');
+    sb.write('LESIONES: ${(p?.lesiones.isEmpty ?? true) ? 'ninguna' : p!.lesiones}\n');
+    sb.write('DIETA: ${p?.tipoDieta ?? '-'} | '
+        'ALERGIAS: ${(p?.alergias.isEmpty ?? true) ? 'ninguna' : p!.alergias.join(',')}\n');
+    sb.write('SUPL: ${(p?.suplementosActuales.isEmpty ?? true) ? 'ninguno' : p!.suplementosActuales.join(',')}\n\n');
 
     if (_planEntrenamiento != null) {
-      sb.writeln('PLAN DE ENTRENAMIENTO ACTUAL:');
+      sb.write('PLAN ENTRENO: ');
       for (int i = 0; i < _planEntrenamiento!.semana.length; i++) {
-        final dia = _planEntrenamiento!.semana[i];
-        final label =
-            i < _diasLabel.length ? _diasLabel[i] : 'Día ${i + 1}';
-        sb.writeln(
-            '$label: ${dia.titulo} (${dia.tipo}) - ${dia.descripcion} - ${dia.duracion}min en ${dia.lugar}');
+        final label = i < _diasLabel.length ? _diasLabel[i] : 'D${i + 1}';
+        sb.write('$label:${_planEntrenamiento!.semana[i].titulo}');
+        if (i < _planEntrenamiento!.semana.length - 1) sb.write(' | ');
       }
-      sb.writeln('Distribución: ${_planEntrenamiento!.notaDistribucion}');
-      sb.writeln();
+      sb.write('\n');
     }
 
     if (_planNutricion != null) {
-      sb.writeln('PLAN NUTRICIONAL ACTUAL:');
-      sb.writeln(
-          'Calorías: ${_planNutricion!.caloriasObjetivo} kcal/día');
-      sb.writeln(
-          'Proteínas: ${_planNutricion!.proteinasObjetivo}g | Carbos: ${_planNutricion!.carbosObjetivo}g | Grasas: ${_planNutricion!.grasasObjetivo}g');
-      for (final comida in _planNutricion!.comidas) {
-        sb.writeln(
-            '  [${comida.tipo}] ${comida.nombre} - ${comida.calorias} kcal (${comida.hora})');
-      }
-      sb.writeln();
+      final n = _planNutricion!;
+      sb.write('MACROS: ${n.caloriasObjetivo}kcal '
+          'P:${n.proteinasObjetivo.round()}g '
+          'C:${n.carbosObjetivo.round()}g '
+          'G:${n.grasasObjetivo.round()}g\n');
     }
 
-    sb.writeln('''CAPACIDAD DE MODIFICAR PLANES:
-Cuando el atleta pida modificar su plan, aplica el cambio y añade al FINAL de tu respuesta la etiqueta (nunca la muestres al usuario):
+    sb.write('''
+ESTILO: Directo, profesional, sin emojis. Máx 4 párrafos. Usa el nombre del atleta ocasionalmente.
 
-Para cambiar entrenamiento:
-MODIFICAR_ENTRENAMIENTO:{"diaSemana":"Lunes","campo":"titulo","valor":"Nuevo título"}
-
-IMPORTANTE para modificar comidas del plan nutricional:
-Usa SIEMPRE el campo "comida" con el TIPO exacto de la comida: "desayuno", "almuerzo", "cena" o "snack".
-NO uses el nombre del plato. NO uses mayúsculas. NO uses inglés.
-
-Ejemplos CORRECTOS:
-MODIFICAR_NUTRICION:{"comida":"cena","campo":"nombre","valor":"Salmón al horno con verduras"}
-MODIFICAR_NUTRICION:{"comida":"desayuno","campo":"calorias","valor":"450"}
-MODIFICAR_NUTRICION:{"comida":"almuerzo","campo":"ingredientes","valor":"pollo, arroz, brócoli"}
-
-Ejemplos INCORRECTOS (nunca hacer esto):
-MODIFICAR_NUTRICION:{"comida":"Ensalada César","campo":"nombre","valor":"..."}
-MODIFICAR_NUTRICION:{"comida":"Breakfast","campo":"nombre","valor":"..."}
-
-Para cambiar macros globales:
-MODIFICAR_MACROS:{"calorias":2200,"proteinas":160,"carbos":240,"grasas":70}
-
-Puedes incluir múltiples etiquetas. Explica el cambio antes de la etiqueta.
-
-ESTILO:
-- Directo y preciso como profesional de élite
-- Sin frases de relleno ni emojis
-- Respuestas concretas con datos científicos
-- Usa el nombre del atleta ocasionalmente
-- Máximo 5 párrafos o 7 items en lista
-- Tono: profesional, directo, motivador''');
-
-    sb.writeln();
-    sb.writeln('''CONOCIMIENTO TÉCNICO AVANZADO:
-
-PERIODIZACIÓN Y CARGA:
-- RIR (Reps In Reserve): reps que quedan antes del fallo. RIR0=fallo, RIR2=2 reps antes. Hipertrofia: RIR1-3; Fuerza máxima: RIR0-1.
-- RPE (Rate of Perceived Exertion): escala 1-10. RPE8=RIR2, RPE9=RIR1, RPE10=fallo. Equivalentes intercambiables.
-- Tempo: formato A-B-C. A=eccéntrico (s), B=pausa isométrica, C=concéntrico (s). Ej: 3-1-2 = 3s bajada, 1s pausa, 2s subida.
-- Mesociclos: bloques de 3-6 semanas con objetivo específico. Secuencia típica: acumulación → intensificación → realización → deload.
-- Deload: reducción de volumen 40-60% manteniendo intensidad. Cada 4-8 semanas según nivel y acumulación de fatiga.
-- Principio de sobrecarga progresiva: para generar adaptación, la carga debe aumentar progresivamente (más peso, más volumen, menos RIR, menos descanso).
-
-SUPLEMENTACIÓN — NIVELES DE EVIDENCIA:
-- NIVEL A (evidencia sólida, recomendables): creatina monohidrato 3-5g/día (fuerza, potencia, recuperación), cafeína 3-6mg/kg 30-60min pre-entreno (rendimiento aeróbico y anaeróbico), beta-alanina 3.2-6.4g/día fraccionado (resistencia muscular >60s), bicarbonato sódico 0.3g/kg pre-entreno (deportes de alta intensidad corta duración).
-- NIVEL B (evidencia moderada): proteína whey/caseína (si no se alcanza objetivo proteico dietético), omega-3 2-3g EPA+DHA/día (reducción inflamación, recuperación), vitamina D3 1000-2000 UI/día si hay deficiencia comprobada, magnesio si hay déficit.
-- NIVEL C (evidencia débil o contextual): BCAAs (superfluos si ingesta proteica total es adecuada ≥1.6g/kg), HMB (solo en atletas no entrenados o en déficit calórico severo), glutamina.
-- SIN EVIDENCIA RELEVANTE: la mayoría de quemadores de grasa, testosterona boosters, "pre-workouts" con ingredientes propietarios no dosificados.
-
-RECUPERACIÓN Y LESIONES:
-- Protocolo POLICE para lesiones agudas (primeras 72h): Protección, Carga Óptima (movimiento sin dolor), Ice/Hielo 10-20min cada 2h, Compresión, Elevación.
-- Señales de sobreentrenamiento funcional vs no-funcional: FC reposo +5-7 bpm sostenida, VFC reducida, rendimiento en descenso >2 semanas consecutivas, alteraciones del sueño, irritabilidad, infecciones frecuentes. Requiere reducción de carga o deload inmediato.
-- Ventana anabólica post-entreno: proteína de calidad dentro de las 2h es suficiente en atletas que comen bien. Urgencia real solo en entrenos en ayunas o >2h de duración.
-- Sueño: 7-9h mínimo. Es el factor de recuperación más importante. Deficit de sueño reduce síntesis proteica, aumenta cortisol y deteriora rendimiento más que cualquier suplemento lo mejora.
-
-FISIOLOGÍA DEL RENDIMIENTO:
-- VO2max: capacidad aeróbica máxima. Mejora con intervalos Z4-Z5 (95-100% VO2max) y volumen Z2 extenso.
-- Umbral láctico LT2 / FTP: intensidad máxima sostenible ~60min. Se mejora con work a sweet spot (88-93% FTP) y bloques tempo (95-105% FTP).
-- Hipertrofia muscular: requiere tensión mecánica + estrés metabólico + daño muscular. Rango efectivo amplio: 5-30 reps con proximidad al fallo (RIR0-3). Volumen semanal efectivo: 10-20 series por grupo muscular.
-- Potencia: producto de fuerza × velocidad. Se desarrolla con ejercicios explosivos a baja carga (30-70% 1RM), pliometría y sprints. Requiere estado de frescura (no en fatiga acumulada).''');
+MODIFICAR PLANES (añade al FINAL de tu respuesta, nunca lo muestres al usuario):
+Entrenamiento: MODIFICAR_ENTRENAMIENTO:{"diaSemana":"Lunes","campo":"titulo","valor":"..."}
+Nutrición — usa SIEMPRE el TIPO (desayuno/almuerzo/cena/snack), NO el nombre del plato:
+  MODIFICAR_NUTRICION:{"comida":"cena","campo":"nombre","valor":"Salmón al horno"}
+  MODIFICAR_NUTRICION:{"comida":"desayuno","campo":"calorias","valor":"450"}
+Macros: MODIFICAR_MACROS:{"calorias":2200,"proteinas":160,"carbos":240,"grasas":70}
+''');
 
     return sb.toString();
   }
@@ -230,25 +162,44 @@ FISIOLOGÍA DEL RENDIMIENTO:
   Future<void> enviarMensaje(String texto) async {
     if (texto.trim().isEmpty || _enviando) return;
 
+    // Comprueba límite diario
+    if (!await UsageTracker.puedeEnviarMensaje()) {
+      _mensajes.add(ChatMessage.deIA(
+        'Has alcanzado el límite de ${UsageTracker.maxMensajesChat} mensajes '
+        'diarios. Vuelve mañana o activa el plan premium para uso ilimitado.',
+      ));
+      notifyListeners();
+      return;
+    }
+
     _mensajes.add(ChatMessage.deUsuario(texto));
     _mensajes.add(ChatMessage.cargando());
     _enviando = true;
     error = null;
     notifyListeners();
 
+    await UsageTracker.registrarMensaje();
+
     try {
-      final historial = _mensajes
+      // Historial completo sin mensajes de sistema ni cargando
+      final historialCompleto = _mensajes
           .where((m) => !m.estaCargando && !m.esMensajeSistema)
           .toList();
-      final historialEnvio = historial.length > 1
-          ? historial.sublist(0, historial.length - 1)
+      // Excluye el último (el mensaje actual que se pasa como mensajeUsuario)
+      final sinActual = historialCompleto.length > 1
+          ? historialCompleto.sublist(0, historialCompleto.length - 1)
           : <ChatMessage>[];
+      // Limita a los últimos 8 mensajes para reducir tokens
+      final historialEnvio = sinActual.length > 8
+          ? sinActual.sublist(sinActual.length - 8)
+          : sinActual;
 
       final respuestaRaw = await _ai
           .enviarMensaje(
             historial: historialEnvio,
             mensajeUsuario: texto,
             systemPrompt: _systemPrompt,
+            modelo: AIModels.haiku,
           )
           .timeout(const Duration(seconds: 30));
 

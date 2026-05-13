@@ -10,6 +10,46 @@ import 'package:fitcoach/data/models/exercise_log.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/tap_card.dart';
 
+void _confirmRegenerar(
+  BuildContext context,
+  HomeProvider provider,
+  VoidCallback onConfirm,
+) {
+  showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      title: const Text(
+        '¿Regenerar plan?',
+        style: TextStyle(color: Colors.white),
+      ),
+      content: const Text(
+        'Ya tienes un plan activo. Regenerarlo consumirá créditos de IA. ¿Estás seguro?',
+        style: TextStyle(color: Color(0xFF888888)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Color(0xFF888888)),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            onConfirm();
+          },
+          child: const Text(
+            'Regenerar',
+            style: TextStyle(color: Color(0xFFC8F135)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class TrainingScreen extends StatelessWidget {
   const TrainingScreen({super.key});
 
@@ -72,7 +112,11 @@ class TrainingScreen extends StatelessWidget {
             GestureDetector(
               onTap: provider.cargandoPlan
                   ? null
-                  : () => provider.generarPlanEntrenamiento(),
+                  : () => _confirmRegenerar(
+                        context,
+                        provider,
+                        () => provider.generarPlanEntrenamiento(forzar: true),
+                      ),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 8),
@@ -216,7 +260,11 @@ class TrainingScreen extends StatelessWidget {
             child: OutlinedButton(
               onPressed: provider.cargandoPlan
                   ? null
-                  : () => provider.generarPlanEntrenamiento(),
+                  : () => _confirmRegenerar(
+                        context,
+                        provider,
+                        () => provider.generarPlanEntrenamiento(forzar: true),
+                      ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.border),
                 minimumSize: const Size(double.infinity, 48),

@@ -3,10 +3,16 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
 
+class AIModels {
+  // Caro pero más inteligente — solo para generación de planes
+  static const String opus = 'claude-opus-4-5';
+  // Barato y rápido — para chat, checkin, lista compra
+  static const String haiku = 'claude-haiku-4-5-20251001';
+}
+
 class AIService {
   static const String _endpoint =
       'https://api.anthropic.com/v1/messages';
-  static const String _model = 'claude-opus-4-5';
 
   Future<String> enviarMensaje({
     required List<ChatMessage> historial,
@@ -14,6 +20,7 @@ class AIService {
     required String systemPrompt,
     int maxTokens = 1024,
     double? temperature,
+    String modelo = AIModels.haiku,
   }) async {
     final apiKey = dotenv.env['ANTHROPIC_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -42,7 +49,7 @@ class AIService {
         'content-type': 'application/json',
       },
       body: jsonEncode({
-        'model': _model,
+        'model': modelo,
         'max_tokens': maxTokens,
         'temperature': ?temperature,
         'system': systemPrompt,

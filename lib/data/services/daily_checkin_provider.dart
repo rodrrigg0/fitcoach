@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fitcoach/data/models/daily_checkin.dart';
 import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
-import 'package:fitcoach/data/services/ai_service.dart';
+import 'package:fitcoach/data/services/ai_service.dart' show AIService, AIModels;
 import 'package:fitcoach/data/services/firestore_service.dart';
 
 class DailyCheckinProvider extends ChangeNotifier {
@@ -136,33 +136,24 @@ Día de descanso:
     }
 
     final systemPrompt = '''
-Eres el entrenador personal de ${_perfil?.nombre ?? 'el atleta'}.
-Acabas de recibir el reporte diario del atleta.
-
-PERFIL DEL ATLETA:
-Nombre: ${_perfil?.nombre ?? 'Atleta'}
-Objetivo: ${_perfil?.objetivo ?? 'No especificado'}
-Deporte: ${_perfil?.deportes.join(', ') ?? 'No especificado'}
-Peso actual: ${_perfil?.peso ?? 0} kg
+Eres el entrenador de ${_perfil?.nombre ?? 'el atleta'}.
+Deporte: ${_perfil?.deportes.join('+') ?? '-'} | Objetivo: ${_perfil?.objetivo ?? '-'}
 
 $contexto
 
-Responde como un entrenador personal experto y cercano:
-1. Evalúa cómo ha ido el día (sé específico con los datos)
-2. Destaca lo positivo primero
-3. Da 1-2 correcciones o sugerencias concretas
-4. Responde su pregunta si la hay
-5. Motívalo para el siguiente entrenamiento
-6. Si hay señales de sobreentrenamiento (energía <4, dolor >7, sueño <5h varios días), alerta y sugiere ajuste
-7. Tono: profesional pero cercano, como un entrenador real
-8. Máximo 200 palabras
-9. Sin emojis''';
+Responde en máx 150 palabras:
+1. Evalúa el día con los datos
+2. Punto positivo + 1-2 mejoras concretas
+3. Responde su pregunta si la hay
+4. Motiva para el siguiente día
+Sin emojis. Tono profesional cercano.''';
 
     return await _ai.enviarMensaje(
       historial: [],
       mensajeUsuario: 'Genera la respuesta del entrenador',
       systemPrompt: systemPrompt,
       maxTokens: 512,
+      modelo: AIModels.haiku,
     );
   }
 
@@ -213,31 +204,19 @@ Responde como un entrenador personal experto y cercano:
             100;
 
     final systemPrompt = '''
-Eres el entrenador personal de ${_perfil?.nombre ?? 'el atleta'}.
-Es fin de semana y debes generar el informe semanal de rendimiento.
+Entrenador de ${_perfil?.nombre ?? 'el atleta'}.
+Datos semana: $sesionesCompletadas/$sesionesPlaneadas sesiones, energía media ${promedioEnergia.toStringAsFixed(1)}/10, sueño ${promedioSueno.toStringAsFixed(1)}h
+${checkins.map((c) => '${c.diaSemana}: E${c.nivelEnergia ?? '-'} R${c.nivelRendimiento ?? '-'} S${c.horasSueno ?? '-'}h').join(' | ')}
 
-DATOS DE LA SEMANA:
-Sesiones completadas: $sesionesCompletadas de $sesionesPlaneadas
-Promedio energía: ${promedioEnergia.toStringAsFixed(1)}/10
-Promedio sueño: ${promedioSueno.toStringAsFixed(1)}h
-Peso actual: ${_perfil?.peso ?? 0} kg
-
-CHECKINS DETALLADOS:
-${checkins.map((c) => '''
-${c.diaSemana}: ${c.esDiaEntreno ? 'Entreno' : 'Descanso'}
-  Energía: ${c.nivelEnergia ?? 'N/A'}/10  Rendimiento: ${c.nivelRendimiento ?? 'N/A'}/10  Sueño: ${c.horasSueno ?? 'N/A'}h''').join('\n')}
-
-Genera un informe semanal profesional con:
-1. RESUMEN EJECUTIVO (2-3 frases)
-2. RENDIMIENTO EN ENTRENAMIENTOS
-3. NUTRICIÓN Y RECUPERACIÓN
-4. PUNTOS FUERTES DE LA SEMANA
-5. ÁREAS DE MEJORA (máximo 3)
-6. OBJETIVOS PARA LA PRÓXIMA SEMANA (3 objetivos medibles)
-7. VALORACIÓN GENERAL (nota del 1-10 con justificación)
-
-Tono: informe profesional, directo, basado en datos, motivador.
-Sin emojis. Máximo 400 palabras.''';
+Informe semanal (máx 300 palabras):
+1. Resumen ejecutivo (2 frases)
+2. Rendimiento en entrenamientos
+3. Nutrición y descanso
+4. Puntos fuertes
+5. Áreas de mejora (máx 3)
+6. Objetivos próxima semana (3)
+7. Nota general X/10
+Sin emojis. Tono profesional, basado en datos.''';
 
     String informe;
     try {
@@ -246,6 +225,7 @@ Sin emojis. Máximo 400 palabras.''';
         mensajeUsuario: 'Genera el informe semanal',
         systemPrompt: systemPrompt,
         maxTokens: 1024,
+        modelo: AIModels.haiku,
       );
     } catch (e) {
       return;
