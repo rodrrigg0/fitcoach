@@ -14,6 +14,7 @@ import 'package:fitcoach/presentation/auth/auth_provider.dart';
 import 'package:fitcoach/data/services/onboarding_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/data/services/chat_provider.dart';
+import 'package:fitcoach/data/services/daily_checkin_provider.dart';
 import 'package:fitcoach/data/services/training_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 
@@ -66,6 +67,14 @@ class FitCoachApp extends StatelessWidget {
               home?.sincronizarEntrenamiento(chat.planEntrenamiento);
             };
             return home!;
+          },
+        ),
+        ChangeNotifierProxyProvider<HomeProvider, DailyCheckinProvider>(
+          create: (_) => DailyCheckinProvider()..inicializar(),
+          update: (_, home, daily) {
+            daily?.actualizarContexto(
+                home.planEntrenamiento, home.perfil);
+            return daily!;
           },
         ),
       ],

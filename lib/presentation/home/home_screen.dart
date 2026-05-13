@@ -5,7 +5,9 @@ import 'package:fitcoach/shared/widgets/app_tutorial.dart';
 import 'package:fitcoach/core/theme/app_theme.dart';
 import 'package:fitcoach/core/constants/app_constants.dart';
 import 'package:fitcoach/core/utils/tutorial_manager.dart';
+import 'package:fitcoach/data/services/daily_checkin_provider.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
+import 'package:fitcoach/presentation/home/daily_checkin_screen.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/number_picker_wheel.dart';
 import 'package:fitcoach/shared/widgets/shimmer_loading.dart';
@@ -53,6 +55,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.background,
+          floatingActionButton: _buildEntrenadorFAB(context),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.endFloat,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1131,6 +1136,73 @@ class _HomeScreenState extends State<HomeScreen> {
           await TutorialManager.marcarTutorialVisto();
         },
       ),
+    );
+  }
+
+  // ─── ENTRENADOR DIARIO ─────────────────────────────────────
+
+  Widget _buildEntrenadorFAB(BuildContext context) {
+    return Consumer<DailyCheckinProvider>(
+      builder: (ctx, provider, _) {
+        final completado = provider.checkinCompletado;
+        return GestureDetector(
+          onTap: () => mostrarCheckinDiario(ctx),
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: completado
+                  ? const Color(0xFF1A1A1A)
+                  : const Color(0xFFC8F135),
+              border: Border.all(
+                color: completado
+                    ? const Color(0xFFC8F135)
+                    : Colors.transparent,
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC8F135)
+                      .withAlpha(completado ? 51 : 102),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Icons.sports_gymnastics,
+                  color: completado
+                      ? const Color(0xFFC8F135)
+                      : const Color(0xFF0D0D0D),
+                  size: 28,
+                ),
+                if (provider.esFinDeSemana &&
+                    provider.informesSemanales.isEmpty)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF00CC66),
+                        border: Border.all(
+                          color: const Color(0xFF0D0D0D),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

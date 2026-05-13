@@ -12,6 +12,8 @@ import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/core/providers/locale_provider.dart';
 import 'package:fitcoach/core/utils/tutorial_manager.dart';
+import 'package:fitcoach/data/models/daily_checkin.dart';
+import 'package:fitcoach/data/services/daily_checkin_provider.dart';
 import 'package:fitcoach/presentation/auth/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -58,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildEstadisticasSection(provider),
                     _buildPesoSection(context, provider),
                   ],
+                  _buildInformesSection(context),
                   _buildSettingsSection(context),
                   const SizedBox(height: 40),
                 ],
@@ -532,6 +535,203 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
+  }
+
+  // ── INFORMES SEMANALES ────────────────────────────────────
+
+  Widget _buildInformesSection(BuildContext context) {
+    return Consumer<DailyCheckinProvider>(
+      builder: (ctx, provider, _) {
+        if (provider.informesSemanales.isEmpty) return const SizedBox.shrink();
+        final informes = provider.informesSemanales.take(4).toList();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'INFORMES SEMANALES',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...informes.map((s) => _informeCard(ctx, s)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _informeCard(BuildContext context, WeeklySummary summary) {
+    final inicio = summary.semanaInicio;
+    final fechaStr =
+        '${inicio.day.toString().padLeft(2, '0')}/${inicio.month.toString().padLeft(2, '0')}/${inicio.year}';
+
+    return GestureDetector(
+      onTap: () => _mostrarInforme(context, summary),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundCard,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Semana del $fechaStr',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        '${summary.sesionesCompletadas}/${summary.sesionesPlaneadas} sesiones',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '⌀ ${summary.promedioEnergia.toStringAsFixed(1)} energía',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFC8F135).withAlpha(32),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Ver informe',
+                style: TextStyle(
+                  color: Color(0xFFC8F135),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarInforme(BuildContext context, WeeklySummary summary) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.97,
+        expand: false,
+        builder: (_, scrollCtrl) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.backgroundCard,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.bar_chart,
+                        color: AppColors.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Informe semanal — ${_fechaLarga(summary.semanaInicio)}',
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(
+                  height: 0.5, thickness: 0.5, color: AppColors.border),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollCtrl,
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    16,
+                    20,
+                    MediaQuery.of(context).padding.bottom + 24,
+                  ),
+                  child: summary.informeIA != null
+                      ? Text(
+                          summary.informeIA!,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                            height: 1.6,
+                          ),
+                        )
+                      : const Text(
+                          'Informe no disponible.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _fechaLarga(DateTime fecha) {
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    return '${fecha.day} de ${meses[fecha.month - 1]} de ${fecha.year}';
   }
 
   // ── SETTINGS + LOGOUT ────────────────────────────────────

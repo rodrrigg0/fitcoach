@@ -18,8 +18,10 @@ import 'package:fitcoach/data/models/user_profile.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/meal_plan.dart';
 import 'package:fitcoach/data/models/chat_message.dart';
+import 'package:fitcoach/data/models/daily_checkin.dart';
 import 'package:fitcoach/data/models/exercise_log.dart';
 import 'package:fitcoach/data/models/weight_log.dart';
+import 'package:intl/intl.dart';
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
@@ -239,6 +241,70 @@ class FirestoreService {
     final list = doc.data()?['mensajes'] as List<dynamic>? ?? [];
     return list
         .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ─── Daily Checkins ─────────────────────────────────────────
+
+  Future<void> guardarCheckin(String uid, DailyCheckin checkin) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('daily_checkins')
+        .doc(checkin.id)
+        .set(checkin.toJson());
+  }
+
+  Future<DailyCheckin?> cargarCheckinHoy(String uid) async {
+    final fechaStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final doc = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('daily_checkins')
+        .doc(fechaStr)
+        .get();
+    if (!doc.exists) return null;
+    return DailyCheckin.fromJson(doc.data()!);
+  }
+
+  Future<List<DailyCheckin>> cargarCheckinsSemana(String uid) async {
+    final ahora = DateTime.now();
+    final inicioSemana = DateTime(
+      ahora.year,
+      ahora.month,
+      ahora.day - (ahora.weekday - 1),
+    );
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('daily_checkins')
+        .where('fecha', isGreaterThanOrEqualTo: inicioSemana.toIso8601String())
+        .get();
+    return snapshot.docs
+        .map((d) => DailyCheckin.fromJson(d.data()))
+        .toList();
+  }
+
+  Future<void> guardarInformeSemanal(
+      String uid, WeeklySummary summary) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('weekly_summaries')
+        .doc(summary.id)
+        .set(summary.toJson());
+  }
+
+  Future<List<WeeklySummary>> cargarInformesSemanales(String uid) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('weekly_summaries')
+        .orderBy('semanaInicio', descending: true)
+        .limit(10)
+        .get();
+    return snapshot.docs
+        .map((d) => WeeklySummary.fromJson(d.data()))
         .toList();
   }
 }
