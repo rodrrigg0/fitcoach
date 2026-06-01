@@ -11,6 +11,7 @@ import 'package:fitcoach/presentation/home/daily_checkin_screen.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/number_picker_wheel.dart';
 import 'package:fitcoach/shared/widgets/shimmer_loading.dart';
+import 'package:fitcoach/shared/widgets/plan_loading_bar.dart';
 import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -262,57 +263,40 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeroCard(BuildContext context, HomeProvider provider) {
     final cargando = provider.cargandoPlan;
 
-    if (cargando) {
-      return _heroCardShell(
-        child: const SizedBox(
-          height: 100,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                    color: AppColors.primary, strokeWidth: 2),
-                SizedBox(height: 12),
-                Text(
-                  'Generando plan con IA...',
-                  style: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
 
     if (provider.planEntrenamiento == null) {
       return _heroCardShell(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppLocalizations.of(context)!.homeNoPlanActive,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
+        child: PlanGeneratorView(
+          isLoading: cargando,
+          type: PlanType.training,
+          compact: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.homeNoPlanActive,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              AppLocalizations.of(context)!.homeGeneratePlanDesc,
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => provider.generarPlanEntrenamiento(),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 44),
+              const SizedBox(height: 6),
+              Text(
+                AppLocalizations.of(context)!.homeGeneratePlanDesc,
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 13),
               ),
-              child: Text(AppLocalizations.of(context)!.homeGeneratePlan),
-            ),
-          ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => provider.generarPlanEntrenamiento(),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 44),
+                ),
+                child: Text(AppLocalizations.of(context)!.homeGeneratePlan),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -322,133 +306,138 @@ class _HomeScreenState extends State<HomeScreen> {
     final categoria = _labelCategoria(context, dia.tipo);
 
     return _heroCardShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-            decoration: BoxDecoration(
-              color: esDescanso
-                  ? AppColors.backgroundElevated
-                  : const Color(0x20C8F135),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              AppLocalizations.of(context)!.homeHeroTag(categoria),
-              style: TextStyle(
+      child: PlanGeneratorView(
+        isLoading: cargando,
+        type: PlanType.training,
+        compact: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              decoration: BoxDecoration(
                 color: esDescanso
-                    ? AppColors.textSecondary
-                    : AppColors.primary,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
+                    ? AppColors.backgroundElevated
+                    : const Color(0x20C8F135),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                AppLocalizations.of(context)!.homeHeroTag(categoria),
+                style: TextStyle(
+                  color: esDescanso
+                      ? AppColors.textSecondary
+                      : AppColors.primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            dia.titulo,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            esDescanso
-                ? AppLocalizations.of(context)!.homeRestMessage
-                : '${dia.duracion} min · ${dia.lugar}',
-            style: const TextStyle(
-                color: AppColors.textSecondary, fontSize: 12),
-          ),
-          if (!esDescanso && dia.caracteristicas.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: dia.caracteristicas.asMap().entries.map((e) {
-                final isFirst = e.key == 0;
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isFirst
-                        ? const Color(0x20C8F135)
-                        : AppColors.backgroundElevated,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    e.value,
-                    style: TextStyle(
-                      color: isFirst
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-          if (esDescanso) ...[
             const SizedBox(height: 10),
             Text(
-              dia.porQueHoy,
+              dia.titulo,
               style: const TextStyle(
-                color: Color(0xFF666666),
-                fontSize: 13,
-                height: 1.4,
+                color: AppColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-          ],
-          if (!esDescanso) ...[
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final l10n = AppLocalizations.of(context)!;
-                      final diasNombre = [
-                        l10n.nutritionDayMon, l10n.nutritionDayTue,
-                        l10n.nutritionDayWed, l10n.nutritionDayThu,
-                        l10n.nutritionDayFri, l10n.nutritionDaySat,
-                        l10n.nutritionDaySun,
-                      ];
-                      context.push(
-                        AppConstants.routeSessionDetail,
-                        extra: {
-                          'workout': dia,
-                          'diaNombre':
-                              diasNombre[DateTime.now().weekday - 1],
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(0, 42),
-                    ),
-                    child: Text(AppLocalizations.of(context)!.homeStartSession),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                GestureDetector(
-                  onTap: () => widget.onTabChange?.call(1),
-                  child: Text(
-                    AppLocalizations.of(context)!.homeViewFullPlan,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 4),
+            Text(
+              esDescanso
+                  ? AppLocalizations.of(context)!.homeRestMessage
+                  : '${dia.duracion} min · ${dia.lugar}',
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 12),
             ),
+            if (!esDescanso && dia.caracteristicas.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: dia.caracteristicas.asMap().entries.map((e) {
+                  final isFirst = e.key == 0;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isFirst
+                          ? const Color(0x20C8F135)
+                          : AppColors.backgroundElevated,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      e.value,
+                      style: TextStyle(
+                        color: isFirst
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+            if (esDescanso) ...[
+              const SizedBox(height: 10),
+              Text(
+                dia.porQueHoy,
+                style: const TextStyle(
+                  color: Color(0xFF666666),
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (!esDescanso) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final l10n = AppLocalizations.of(context)!;
+                        final diasNombre = [
+                          l10n.nutritionDayMon, l10n.nutritionDayTue,
+                          l10n.nutritionDayWed, l10n.nutritionDayThu,
+                          l10n.nutritionDayFri, l10n.nutritionDaySat,
+                          l10n.nutritionDaySun,
+                        ];
+                        context.push(
+                          AppConstants.routeSessionDetail,
+                          extra: {
+                            'workout': dia,
+                            'diaNombre':
+                                diasNombre[DateTime.now().weekday - 1],
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 42),
+                      ),
+                      child: Text(AppLocalizations.of(context)!.homeStartSession),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  GestureDetector(
+                    onTap: () => widget.onTabChange?.call(1),
+                    child: Text(
+                      AppLocalizations.of(context)!.homeViewFullPlan,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1065,61 +1054,49 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── TUTORIAL ──────────────────────────────────────────────
 
   void _mostrarTutorial() {
+    final l10n = AppLocalizations.of(context)!;
     final steps = <TutorialStep>[
       if (widget.bottomNavKey != null)
         TutorialStep(
           targetKey: widget.bottomNavKey!,
-          titulo: 'Navegación principal',
-          descripcion:
-              'Accede a Inicio, Entrenamiento, Nutrición y Chat desde aquí.',
+          titulo: l10n.tutorialNavTitle,
+          descripcion: l10n.tutorialNavDesc,
           icon: Icons.grid_view,
         ),
       TutorialStep(
         targetKey: _keyHeader,
-        titulo: 'Tu perfil',
-        descripcion:
-            'Aquí aparece tu nombre y tu racha de días entrenando. '
-            'Pulsa el avatar para ver y editar tu perfil completo.',
+        titulo: l10n.tutorialProfileTitle,
+        descripcion: l10n.tutorialProfileDesc,
         icon: Icons.person_outline,
       ),
       TutorialStep(
         targetKey: _keyHeroCard,
-        titulo: 'Tu entrenamiento de hoy',
-        descripcion:
-            "Aquí ves la sesión programada. Pulsa 'Iniciar sesión' "
-            'para empezar y registrar tus pesos y repeticiones.',
+        titulo: l10n.tutorialWorkoutTitle,
+        descripcion: l10n.tutorialWorkoutDesc,
         icon: Icons.fitness_center,
       ),
       TutorialStep(
         targetKey: _keyMetricas,
-        titulo: 'Tus métricas del día',
-        descripcion:
-            'Calorías, próxima comida, peso actual y horas de sueño '
-            'de un vistazo.',
+        titulo: l10n.tutorialMetricsTitle,
+        descripcion: l10n.tutorialMetricsDesc,
         icon: Icons.bar_chart,
       ),
       TutorialStep(
         targetKey: _keyRacha,
-        titulo: 'Racha semanal',
-        descripcion:
-            'Días entrenados esta semana. '
-            '¡Intenta completar todos tus días programados!',
+        titulo: l10n.tutorialStreakTitle,
+        descripcion: l10n.tutorialStreakDesc,
         icon: Icons.local_fire_department,
       ),
       TutorialStep(
         targetKey: _keyMacros,
-        titulo: 'Macros del día',
-        descripcion:
-            'Seguimiento de proteínas, carbohidratos y grasas en tiempo real.',
+        titulo: l10n.tutorialMacrosTitle,
+        descripcion: l10n.tutorialMacrosDesc,
         icon: Icons.restaurant,
       ),
       TutorialStep(
         targetKey: widget.bottomNavKey ?? _keyHeader,
-        titulo: 'Tu entrenador personal',
-        descripcion:
-            'Pulsa el Chat en la barra inferior para hablar con tu '
-            'entrenador 24h sobre entrenamientos, nutrición, '
-            'suplementación o cualquier duda.',
+        titulo: l10n.tutorialCoachTitle,
+        descripcion: l10n.tutorialCoachDesc,
         icon: Icons.chat_bubble_outline,
       ),
     ];

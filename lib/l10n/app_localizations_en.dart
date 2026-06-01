@@ -489,4 +489,253 @@ class AppLocalizationsEn extends AppLocalizations {
   String profilePhotosWeightDelta(String delta) {
     return '$delta kg difference';
   }
+
+  @override
+  String get monthJan => 'January';
+
+  @override
+  String get monthFeb => 'February';
+
+  @override
+  String get monthMar => 'March';
+
+  @override
+  String get monthApr => 'April';
+
+  @override
+  String get monthMay => 'May';
+
+  @override
+  String get monthJun => 'June';
+
+  @override
+  String get monthJul => 'July';
+
+  @override
+  String get monthAug => 'August';
+
+  @override
+  String get monthSep => 'September';
+
+  @override
+  String get monthOct => 'October';
+
+  @override
+  String get monthNov => 'November';
+
+  @override
+  String get monthDec => 'December';
+
+  @override
+  String get trainingRegenDialogTitle => 'Regenerate plan?';
+
+  @override
+  String get trainingRegenDialogContent =>
+      'You already have an active plan. Regenerating it will use AI credits. Are you sure?';
+
+  @override
+  String get nutritionDailyTotals => 'TODAY\'S TOTALS';
+
+  @override
+  String get nutritionAdjustMacros => 'Adjust macros';
+
+  @override
+  String get nutritionProtein => 'Protein';
+
+  @override
+  String get nutritionCarbohydrates => 'Carbohydrates';
+
+  @override
+  String nutritionMacroGoalOf(int value) {
+    return 'of ${value}g';
+  }
+
+  @override
+  String get nutritionWarnProtein =>
+      'Protein below 1.6g/kg. May limit muscle recovery.';
+
+  @override
+  String get nutritionWarnCalories =>
+      'Total below 1200 kcal. Not recommended without medical supervision.';
+
+  @override
+  String get nutritionRestoreAuto => 'Restore defaults';
+
+  @override
+  String get nutritionSaveChanges => 'Save changes';
+
+  @override
+  String get nutritionGoalsUpdated => 'Goals updated';
+
+  @override
+  String get profileStreakLabel => 'Current\nstreak';
+
+  @override
+  String get profileDaysThisWeekLabel => 'Days this\nweek';
+
+  @override
+  String get profileDaysInAppLabel => 'Days in\nFitCoach';
+
+  @override
+  String get profileLabelSport => 'Sport';
+
+  @override
+  String get profileLabelPlace => 'Place';
+
+  @override
+  String get profileLabelDaysPerWeek => 'Days/week';
+
+  @override
+  String get profileLabelSessionDuration => 'Session duration';
+
+  @override
+  String get profileLabelDiet => 'Diet';
+
+  @override
+  String get profileLabelUsualSleep => 'Usual sleep';
+
+  @override
+  String get profileMyProfile => 'MY PROFILE';
+
+  @override
+  String get profileStatisticsSection => 'STATISTICS';
+
+  @override
+  String get profileStatStreak => 'Current streak';
+
+  @override
+  String get profileStatDaysTrained => 'Days trained this week';
+
+  @override
+  String get profileStatMemberSince => 'Member since';
+
+  @override
+  String get profileWeeklyReportsSection => 'WEEKLY REPORTS';
+
+  @override
+  String profileWeekOf(String date) {
+    return 'Week of $date';
+  }
+
+  @override
+  String profileSessionsCount(int done, int total) {
+    return '$done/$total sessions';
+  }
+
+  @override
+  String profileAvgEnergy(String energy) {
+    return '⌀ $energy energy';
+  }
+
+  @override
+  String get profileViewReport => 'View report';
+
+  @override
+  String profileWeeklyReportTitle(String date) {
+    return 'Weekly report — $date';
+  }
+
+  @override
+  String get profileReportUnavailable => 'Report not available.';
+
+  @override
+  String get profileViewTutorialAgain => 'View tutorial again';
+
+  @override
+  String get profileTutorialReset =>
+      'Tutorial reset. Go back to home to view it.';
+
+  @override
+  String profileDayCount(int count) {
+    return '$count days';
+  }
+
+  @override
+  String profileHourCount(int count) {
+    return '$count hours';
+  }
+
+  @override
+  String get tutorialNavTitle => 'Main navigation';
+
+  @override
+  String get tutorialNavDesc =>
+      'Access Home, Training, Nutrition and Chat from here.';
+
+  @override
+  String get tutorialProfileTitle => 'Your profile';
+
+  @override
+  String get tutorialProfileDesc =>
+      'Your name and training streak appear here. Tap the avatar to view and edit your full profile.';
+
+  @override
+  String get tutorialWorkoutTitle => 'Today\'s workout';
+
+  @override
+  String get tutorialWorkoutDesc =>
+      'Here you see the scheduled session. Tap \'Start session\' to begin and log your weights and reps.';
+
+  @override
+  String get tutorialMetricsTitle => 'Today\'s metrics';
+
+  @override
+  String get tutorialMetricsDesc =>
+      'Calories, next meal, current weight and sleep hours at a glance.';
+
+  @override
+  String get tutorialStreakTitle => 'Weekly streak';
+
+  @override
+  String get tutorialStreakDesc =>
+      'Days trained this week. Try to complete all your scheduled days!';
+
+  @override
+  String get tutorialMacrosTitle => 'Today\'s macros';
+
+  @override
+  String get tutorialMacrosDesc =>
+      'Real-time tracking of proteins, carbs and fats.';
+
+  @override
+  String get tutorialCoachTitle => 'Your personal trainer';
+
+  @override
+  String get tutorialCoachDesc =>
+      'Tap Chat in the bottom bar to talk to your trainer 24/7 about workouts, nutrition, supplements or any question.';
+
+  @override
+  String chatMessagesRemaining(int count) {
+    return '$count messages remaining today';
+  }
+
+  @override
+  String get planLoadingReady => 'Plan ready! ✓';
+
+  @override
+  String get trainingLoadPhase0 => 'Analysing your sports profile...';
+
+  @override
+  String get trainingLoadPhase1 => 'Designing the periodisation...';
+
+  @override
+  String get trainingLoadPhase2 => 'Selecting exercises...';
+
+  @override
+  String get trainingLoadPhase3 => 'Optimising sets and reps...';
+
+  @override
+  String get loadingLastAdjustments => 'Final adjustments...';
+
+  @override
+  String get nutritionLoadPhase0 => 'Calculating your macronutrients...';
+
+  @override
+  String get nutritionLoadPhase1 => 'Planning weekly menu...';
+
+  @override
+  String get nutritionLoadPhase2 => 'Adjusting to your budget...';
+
+  @override
+  String get nutritionLoadPhase3 => 'Generating shopping list...';
 }

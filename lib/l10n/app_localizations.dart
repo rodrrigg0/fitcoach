@@ -1009,6 +1009,450 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{delta} kg de diferencia'**
   String profilePhotosWeightDelta(String delta);
+
+  /// January
+  ///
+  /// In es, this message translates to:
+  /// **'enero'**
+  String get monthJan;
+
+  /// February
+  ///
+  /// In es, this message translates to:
+  /// **'febrero'**
+  String get monthFeb;
+
+  /// March
+  ///
+  /// In es, this message translates to:
+  /// **'marzo'**
+  String get monthMar;
+
+  /// April
+  ///
+  /// In es, this message translates to:
+  /// **'abril'**
+  String get monthApr;
+
+  /// May
+  ///
+  /// In es, this message translates to:
+  /// **'mayo'**
+  String get monthMay;
+
+  /// June
+  ///
+  /// In es, this message translates to:
+  /// **'junio'**
+  String get monthJun;
+
+  /// July
+  ///
+  /// In es, this message translates to:
+  /// **'julio'**
+  String get monthJul;
+
+  /// August
+  ///
+  /// In es, this message translates to:
+  /// **'agosto'**
+  String get monthAug;
+
+  /// September
+  ///
+  /// In es, this message translates to:
+  /// **'septiembre'**
+  String get monthSep;
+
+  /// October
+  ///
+  /// In es, this message translates to:
+  /// **'octubre'**
+  String get monthOct;
+
+  /// November
+  ///
+  /// In es, this message translates to:
+  /// **'noviembre'**
+  String get monthNov;
+
+  /// December
+  ///
+  /// In es, this message translates to:
+  /// **'diciembre'**
+  String get monthDec;
+
+  /// Regenerate plan dialog title
+  ///
+  /// In es, this message translates to:
+  /// **'¿Regenerar plan?'**
+  String get trainingRegenDialogTitle;
+
+  /// Regenerate plan dialog content
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes un plan activo. Regenerarlo consumirá créditos de IA. ¿Estás seguro?'**
+  String get trainingRegenDialogContent;
+
+  /// Daily totals section label
+  ///
+  /// In es, this message translates to:
+  /// **'TOTALES DEL DÍA'**
+  String get nutritionDailyTotals;
+
+  /// Adjust macros sheet title
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustar macros'**
+  String get nutritionAdjustMacros;
+
+  /// Protein label in macro slider
+  ///
+  /// In es, this message translates to:
+  /// **'Proteínas'**
+  String get nutritionProtein;
+
+  /// Carbohydrates label in macro slider
+  ///
+  /// In es, this message translates to:
+  /// **'Carbohidratos'**
+  String get nutritionCarbohydrates;
+
+  /// Macro goal label showing target grams
+  ///
+  /// In es, this message translates to:
+  /// **'de {value}g'**
+  String nutritionMacroGoalOf(int value);
+
+  /// Warning when protein is too low
+  ///
+  /// In es, this message translates to:
+  /// **'Proteínas por debajo de 1.6g/kg. Puede limitar la recuperación muscular.'**
+  String get nutritionWarnProtein;
+
+  /// Warning when calories are too low
+  ///
+  /// In es, this message translates to:
+  /// **'Total inferior a 1200 kcal. No recomendado sin supervisión médica.'**
+  String get nutritionWarnCalories;
+
+  /// Restore automatic macros button
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar automático'**
+  String get nutritionRestoreAuto;
+
+  /// Save changes button in macro sheet
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get nutritionSaveChanges;
+
+  /// Goals updated snackbar message
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivos actualizados'**
+  String get nutritionGoalsUpdated;
+
+  /// Streak stat card label
+  ///
+  /// In es, this message translates to:
+  /// **'Racha\nactual'**
+  String get profileStreakLabel;
+
+  /// Days this week stat card label
+  ///
+  /// In es, this message translates to:
+  /// **'Días esta\nsemana'**
+  String get profileDaysThisWeekLabel;
+
+  /// Days in app stat card label
+  ///
+  /// In es, this message translates to:
+  /// **'Días en\nFitCoach'**
+  String get profileDaysInAppLabel;
+
+  /// Sport profile label
+  ///
+  /// In es, this message translates to:
+  /// **'Deporte'**
+  String get profileLabelSport;
+
+  /// Training place profile label
+  ///
+  /// In es, this message translates to:
+  /// **'Lugar'**
+  String get profileLabelPlace;
+
+  /// Days per week profile label
+  ///
+  /// In es, this message translates to:
+  /// **'Días/semana'**
+  String get profileLabelDaysPerWeek;
+
+  /// Session duration profile label
+  ///
+  /// In es, this message translates to:
+  /// **'Duración sesión'**
+  String get profileLabelSessionDuration;
+
+  /// Diet profile label
+  ///
+  /// In es, this message translates to:
+  /// **'Dieta'**
+  String get profileLabelDiet;
+
+  /// Usual sleep profile label
+  ///
+  /// In es, this message translates to:
+  /// **'Sueño habitual'**
+  String get profileLabelUsualSleep;
+
+  /// My profile section header
+  ///
+  /// In es, this message translates to:
+  /// **'MI PERFIL'**
+  String get profileMyProfile;
+
+  /// Statistics section header
+  ///
+  /// In es, this message translates to:
+  /// **'ESTADÍSTICAS'**
+  String get profileStatisticsSection;
+
+  /// Current streak stat label
+  ///
+  /// In es, this message translates to:
+  /// **'Racha actual'**
+  String get profileStatStreak;
+
+  /// Days trained this week stat label
+  ///
+  /// In es, this message translates to:
+  /// **'Días entrenados esta semana'**
+  String get profileStatDaysTrained;
+
+  /// Member since stat label
+  ///
+  /// In es, this message translates to:
+  /// **'Miembro desde'**
+  String get profileStatMemberSince;
+
+  /// Weekly reports section header
+  ///
+  /// In es, this message translates to:
+  /// **'INFORMES SEMANALES'**
+  String get profileWeeklyReportsSection;
+
+  /// Week of date label
+  ///
+  /// In es, this message translates to:
+  /// **'Semana del {date}'**
+  String profileWeekOf(String date);
+
+  /// Sessions count label
+  ///
+  /// In es, this message translates to:
+  /// **'{done}/{total} sesiones'**
+  String profileSessionsCount(int done, int total);
+
+  /// Average energy label
+  ///
+  /// In es, this message translates to:
+  /// **'⌀ {energy} energía'**
+  String profileAvgEnergy(String energy);
+
+  /// View report button
+  ///
+  /// In es, this message translates to:
+  /// **'Ver informe'**
+  String get profileViewReport;
+
+  /// Weekly report modal title
+  ///
+  /// In es, this message translates to:
+  /// **'Informe semanal — {date}'**
+  String profileWeeklyReportTitle(String date);
+
+  /// Report unavailable message
+  ///
+  /// In es, this message translates to:
+  /// **'Informe no disponible.'**
+  String get profileReportUnavailable;
+
+  /// View tutorial again option
+  ///
+  /// In es, this message translates to:
+  /// **'Ver tutorial de nuevo'**
+  String get profileViewTutorialAgain;
+
+  /// Tutorial reset snackbar message
+  ///
+  /// In es, this message translates to:
+  /// **'Tutorial restablecido. Vuelve al inicio para verlo.'**
+  String get profileTutorialReset;
+
+  /// Day count label
+  ///
+  /// In es, this message translates to:
+  /// **'{count} días'**
+  String profileDayCount(int count);
+
+  /// Hour count label
+  ///
+  /// In es, this message translates to:
+  /// **'{count} horas'**
+  String profileHourCount(int count);
+
+  /// Tutorial step: main navigation title
+  ///
+  /// In es, this message translates to:
+  /// **'Navegación principal'**
+  String get tutorialNavTitle;
+
+  /// Tutorial step: main navigation description
+  ///
+  /// In es, this message translates to:
+  /// **'Accede a Inicio, Entrenamiento, Nutrición y Chat desde aquí.'**
+  String get tutorialNavDesc;
+
+  /// Tutorial step: profile title
+  ///
+  /// In es, this message translates to:
+  /// **'Tu perfil'**
+  String get tutorialProfileTitle;
+
+  /// Tutorial step: profile description
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí aparece tu nombre y tu racha de días entrenando. Pulsa el avatar para ver y editar tu perfil completo.'**
+  String get tutorialProfileDesc;
+
+  /// Tutorial step: today workout title
+  ///
+  /// In es, this message translates to:
+  /// **'Tu entrenamiento de hoy'**
+  String get tutorialWorkoutTitle;
+
+  /// Tutorial step: today workout description
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí ves la sesión programada. Pulsa \'Iniciar sesión\' para empezar y registrar tus pesos y repeticiones.'**
+  String get tutorialWorkoutDesc;
+
+  /// Tutorial step: daily metrics title
+  ///
+  /// In es, this message translates to:
+  /// **'Tus métricas del día'**
+  String get tutorialMetricsTitle;
+
+  /// Tutorial step: daily metrics description
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías, próxima comida, peso actual y horas de sueño de un vistazo.'**
+  String get tutorialMetricsDesc;
+
+  /// Tutorial step: weekly streak title
+  ///
+  /// In es, this message translates to:
+  /// **'Racha semanal'**
+  String get tutorialStreakTitle;
+
+  /// Tutorial step: weekly streak description
+  ///
+  /// In es, this message translates to:
+  /// **'Días entrenados esta semana. ¡Intenta completar todos tus días programados!'**
+  String get tutorialStreakDesc;
+
+  /// Tutorial step: daily macros title
+  ///
+  /// In es, this message translates to:
+  /// **'Macros del día'**
+  String get tutorialMacrosTitle;
+
+  /// Tutorial step: daily macros description
+  ///
+  /// In es, this message translates to:
+  /// **'Seguimiento de proteínas, carbohidratos y grasas en tiempo real.'**
+  String get tutorialMacrosDesc;
+
+  /// Tutorial step: personal coach title
+  ///
+  /// In es, this message translates to:
+  /// **'Tu entrenador personal'**
+  String get tutorialCoachTitle;
+
+  /// Tutorial step: personal coach description
+  ///
+  /// In es, this message translates to:
+  /// **'Pulsa el Chat en la barra inferior para hablar con tu entrenador 24h sobre entrenamientos, nutrición, suplementación o cualquier duda.'**
+  String get tutorialCoachDesc;
+
+  /// Chat messages remaining today counter
+  ///
+  /// In es, this message translates to:
+  /// **'{count} mensajes restantes hoy'**
+  String chatMessagesRemaining(int count);
+
+  /// Plan generation completed message
+  ///
+  /// In es, this message translates to:
+  /// **'¡Plan listo!'**
+  String get planLoadingReady;
+
+  /// Training load phase 0-20%
+  ///
+  /// In es, this message translates to:
+  /// **'Analizando tu perfil deportivo...'**
+  String get trainingLoadPhase0;
+
+  /// Training load phase 20-40%
+  ///
+  /// In es, this message translates to:
+  /// **'Diseñando la periodización...'**
+  String get trainingLoadPhase1;
+
+  /// Training load phase 40-60%
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionando ejercicios...'**
+  String get trainingLoadPhase2;
+
+  /// Training load phase 60-80%
+  ///
+  /// In es, this message translates to:
+  /// **'Optimizando series y repeticiones...'**
+  String get trainingLoadPhase3;
+
+  /// Loading bar phase 80-99% for both plan types
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos ajustes...'**
+  String get loadingLastAdjustments;
+
+  /// Nutrition load phase 0-20%
+  ///
+  /// In es, this message translates to:
+  /// **'Calculando tus macronutrientes...'**
+  String get nutritionLoadPhase0;
+
+  /// Nutrition load phase 20-40%
+  ///
+  /// In es, this message translates to:
+  /// **'Planificando menú semanal...'**
+  String get nutritionLoadPhase1;
+
+  /// Nutrition load phase 40-60%
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustando al presupuesto...'**
+  String get nutritionLoadPhase2;
+
+  /// Nutrition load phase 60-80%
+  ///
+  /// In es, this message translates to:
+  /// **'Generando lista de la compra...'**
+  String get nutritionLoadPhase3;
 }
 
 class _AppLocalizationsDelegate

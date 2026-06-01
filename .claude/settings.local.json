@@ -7,7 +7,10 @@
       "Bash(flutter clean:*)",
       "Bash(timeout /t 15)",
       "Bash(flutter gen-l10n:*)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\proyectos\\\\fitcoach\\\\lib\" -Recurse -Filter \"*.dart\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)"
     ]
   }
 }

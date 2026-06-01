@@ -491,4 +491,253 @@ class AppLocalizationsEs extends AppLocalizations {
   String profilePhotosWeightDelta(String delta) {
     return '$delta kg de diferencia';
   }
+
+  @override
+  String get monthJan => 'enero';
+
+  @override
+  String get monthFeb => 'febrero';
+
+  @override
+  String get monthMar => 'marzo';
+
+  @override
+  String get monthApr => 'abril';
+
+  @override
+  String get monthMay => 'mayo';
+
+  @override
+  String get monthJun => 'junio';
+
+  @override
+  String get monthJul => 'julio';
+
+  @override
+  String get monthAug => 'agosto';
+
+  @override
+  String get monthSep => 'septiembre';
+
+  @override
+  String get monthOct => 'octubre';
+
+  @override
+  String get monthNov => 'noviembre';
+
+  @override
+  String get monthDec => 'diciembre';
+
+  @override
+  String get trainingRegenDialogTitle => '¿Regenerar plan?';
+
+  @override
+  String get trainingRegenDialogContent =>
+      'Ya tienes un plan activo. Regenerarlo consumirá créditos de IA. ¿Estás seguro?';
+
+  @override
+  String get nutritionDailyTotals => 'TOTALES DEL DÍA';
+
+  @override
+  String get nutritionAdjustMacros => 'Ajustar macros';
+
+  @override
+  String get nutritionProtein => 'Proteínas';
+
+  @override
+  String get nutritionCarbohydrates => 'Carbohidratos';
+
+  @override
+  String nutritionMacroGoalOf(int value) {
+    return 'de ${value}g';
+  }
+
+  @override
+  String get nutritionWarnProtein =>
+      'Proteínas por debajo de 1.6g/kg. Puede limitar la recuperación muscular.';
+
+  @override
+  String get nutritionWarnCalories =>
+      'Total inferior a 1200 kcal. No recomendado sin supervisión médica.';
+
+  @override
+  String get nutritionRestoreAuto => 'Restaurar automático';
+
+  @override
+  String get nutritionSaveChanges => 'Guardar cambios';
+
+  @override
+  String get nutritionGoalsUpdated => 'Objetivos actualizados';
+
+  @override
+  String get profileStreakLabel => 'Racha\nactual';
+
+  @override
+  String get profileDaysThisWeekLabel => 'Días esta\nsemana';
+
+  @override
+  String get profileDaysInAppLabel => 'Días en\nFitCoach';
+
+  @override
+  String get profileLabelSport => 'Deporte';
+
+  @override
+  String get profileLabelPlace => 'Lugar';
+
+  @override
+  String get profileLabelDaysPerWeek => 'Días/semana';
+
+  @override
+  String get profileLabelSessionDuration => 'Duración sesión';
+
+  @override
+  String get profileLabelDiet => 'Dieta';
+
+  @override
+  String get profileLabelUsualSleep => 'Sueño habitual';
+
+  @override
+  String get profileMyProfile => 'MI PERFIL';
+
+  @override
+  String get profileStatisticsSection => 'ESTADÍSTICAS';
+
+  @override
+  String get profileStatStreak => 'Racha actual';
+
+  @override
+  String get profileStatDaysTrained => 'Días entrenados esta semana';
+
+  @override
+  String get profileStatMemberSince => 'Miembro desde';
+
+  @override
+  String get profileWeeklyReportsSection => 'INFORMES SEMANALES';
+
+  @override
+  String profileWeekOf(String date) {
+    return 'Semana del $date';
+  }
+
+  @override
+  String profileSessionsCount(int done, int total) {
+    return '$done/$total sesiones';
+  }
+
+  @override
+  String profileAvgEnergy(String energy) {
+    return '⌀ $energy energía';
+  }
+
+  @override
+  String get profileViewReport => 'Ver informe';
+
+  @override
+  String profileWeeklyReportTitle(String date) {
+    return 'Informe semanal — $date';
+  }
+
+  @override
+  String get profileReportUnavailable => 'Informe no disponible.';
+
+  @override
+  String get profileViewTutorialAgain => 'Ver tutorial de nuevo';
+
+  @override
+  String get profileTutorialReset =>
+      'Tutorial restablecido. Vuelve al inicio para verlo.';
+
+  @override
+  String profileDayCount(int count) {
+    return '$count días';
+  }
+
+  @override
+  String profileHourCount(int count) {
+    return '$count horas';
+  }
+
+  @override
+  String get tutorialNavTitle => 'Navegación principal';
+
+  @override
+  String get tutorialNavDesc =>
+      'Accede a Inicio, Entrenamiento, Nutrición y Chat desde aquí.';
+
+  @override
+  String get tutorialProfileTitle => 'Tu perfil';
+
+  @override
+  String get tutorialProfileDesc =>
+      'Aquí aparece tu nombre y tu racha de días entrenando. Pulsa el avatar para ver y editar tu perfil completo.';
+
+  @override
+  String get tutorialWorkoutTitle => 'Tu entrenamiento de hoy';
+
+  @override
+  String get tutorialWorkoutDesc =>
+      'Aquí ves la sesión programada. Pulsa \'Iniciar sesión\' para empezar y registrar tus pesos y repeticiones.';
+
+  @override
+  String get tutorialMetricsTitle => 'Tus métricas del día';
+
+  @override
+  String get tutorialMetricsDesc =>
+      'Calorías, próxima comida, peso actual y horas de sueño de un vistazo.';
+
+  @override
+  String get tutorialStreakTitle => 'Racha semanal';
+
+  @override
+  String get tutorialStreakDesc =>
+      'Días entrenados esta semana. ¡Intenta completar todos tus días programados!';
+
+  @override
+  String get tutorialMacrosTitle => 'Macros del día';
+
+  @override
+  String get tutorialMacrosDesc =>
+      'Seguimiento de proteínas, carbohidratos y grasas en tiempo real.';
+
+  @override
+  String get tutorialCoachTitle => 'Tu entrenador personal';
+
+  @override
+  String get tutorialCoachDesc =>
+      'Pulsa el Chat en la barra inferior para hablar con tu entrenador 24h sobre entrenamientos, nutrición, suplementación o cualquier duda.';
+
+  @override
+  String chatMessagesRemaining(int count) {
+    return '$count mensajes restantes hoy';
+  }
+
+  @override
+  String get planLoadingReady => '¡Plan listo!';
+
+  @override
+  String get trainingLoadPhase0 => 'Analizando tu perfil deportivo...';
+
+  @override
+  String get trainingLoadPhase1 => 'Diseñando la periodización...';
+
+  @override
+  String get trainingLoadPhase2 => 'Seleccionando ejercicios...';
+
+  @override
+  String get trainingLoadPhase3 => 'Optimizando series y repeticiones...';
+
+  @override
+  String get loadingLastAdjustments => 'Últimos ajustes...';
+
+  @override
+  String get nutritionLoadPhase0 => 'Calculando tus macronutrientes...';
+
+  @override
+  String get nutritionLoadPhase1 => 'Planificando menú semanal...';
+
+  @override
+  String get nutritionLoadPhase2 => 'Ajustando al presupuesto...';
+
+  @override
+  String get nutritionLoadPhase3 => 'Generando lista de la compra...';
 }

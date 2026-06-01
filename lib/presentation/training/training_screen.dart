@@ -8,6 +8,7 @@ import 'package:fitcoach/data/services/training_provider.dart';
 import 'package:fitcoach/data/models/workout_plan.dart';
 import 'package:fitcoach/data/models/exercise_log.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
+import 'package:fitcoach/shared/widgets/plan_loading_bar.dart';
 import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 void _confirmRegenerar(
@@ -15,24 +16,25 @@ void _confirmRegenerar(
   HomeProvider provider,
   VoidCallback onConfirm,
 ) {
+  final l10n = AppLocalizations.of(context)!;
   showDialog<void>(
     context: context,
     builder: (_) => AlertDialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      title: const Text(
-        '¿Regenerar plan?',
-        style: TextStyle(color: Colors.white),
+      title: Text(
+        l10n.trainingRegenDialogTitle,
+        style: const TextStyle(color: Colors.white),
       ),
-      content: const Text(
-        'Ya tienes un plan activo. Regenerarlo consumirá créditos de IA. ¿Estás seguro?',
-        style: TextStyle(color: Color(0xFF888888)),
+      content: Text(
+        l10n.trainingRegenDialogContent,
+        style: const TextStyle(color: Color(0xFF888888)),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(color: Color(0xFF888888)),
+          child: Text(
+            l10n.cancel,
+            style: const TextStyle(color: Color(0xFF888888)),
           ),
         ),
         TextButton(
@@ -40,9 +42,9 @@ void _confirmRegenerar(
             Navigator.of(context).pop();
             onConfirm();
           },
-          child: const Text(
-            'Regenerar',
-            style: TextStyle(color: Color(0xFFC8F135)),
+          child: Text(
+            l10n.trainingRegenerate,
+            style: const TextStyle(color: Color(0xFFC8F135)),
           ),
         ),
       ],
@@ -75,17 +77,24 @@ class TrainingScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: AppColors.background,
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, provider),
-                  if (provider.planEntrenamiento == null)
-                    _buildEmptyState(context, provider)
-                  else
-                    _buildPlanContent(context, provider),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context, provider),
+                Expanded(
+                  child: PlanGeneratorView(
+                    isLoading: provider.cargandoPlan,
+                    type: PlanType.training,
+                    child: provider.planEntrenamiento == null
+                        ? SingleChildScrollView(
+                            child: _buildEmptyState(context, provider),
+                          )
+                        : SingleChildScrollView(
+                            child: _buildPlanContent(context, provider),
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -196,23 +205,10 @@ class TrainingScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
-          if (provider.cargandoPlan)
-            Column(
-              children: [
-                const CircularProgressIndicator(color: AppColors.primary),
-                const SizedBox(height: 12),
-                Text(
-                  AppLocalizations.of(context)!.homeGeneratingAI,
-                  style: const TextStyle(
-                      color: AppColors.textSecondary, fontSize: 13),
-                ),
-              ],
-            )
-          else
-            ElevatedButton(
-              onPressed: () => provider.generarPlanEntrenamiento(),
-              child: Text(AppLocalizations.of(context)!.trainingGeneratePlan),
-            ),
+          ElevatedButton(
+            onPressed: () => provider.generarPlanEntrenamiento(),
+            child: Text(AppLocalizations.of(context)!.trainingGeneratePlan),
+          ),
         ],
       ),
     );
@@ -336,7 +332,7 @@ class TrainingScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _formatFechaHistorial(sesion.fecha),
+                            _formatFechaHistorial(context, sesion.fecha),
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
@@ -434,7 +430,7 @@ class TrainingScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _formatFechaHistorial(sesion.fecha),
+                          _formatFechaHistorial(context, sesion.fecha),
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
@@ -615,7 +611,7 @@ class TrainingScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  _formatFechaHistorial(sesion.fecha),
+                                  _formatFechaHistorial(context, sesion.fecha),
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 12,
@@ -640,18 +636,24 @@ class TrainingScreen extends StatelessWidget {
     );
   }
 
-  String _formatFechaHistorial(DateTime fecha) {
-    const diasSemana = [
-      'Lunes', 'Martes', 'Miércoles', 'Jueves',
-      'Viernes', 'Sábado', 'Domingo',
+  String _formatFechaHistorial(BuildContext context, DateTime fecha) {
+    final l10n = AppLocalizations.of(context)!;
+    final diasSemana = [
+      l10n.nutritionDayMon, l10n.nutritionDayTue, l10n.nutritionDayWed,
+      l10n.nutritionDayThu, l10n.nutritionDayFri, l10n.nutritionDaySat,
+      l10n.nutritionDaySun,
     ];
-    const meses = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre',
-      'diciembre',
+    final meses = [
+      l10n.monthJan, l10n.monthFeb, l10n.monthMar, l10n.monthApr,
+      l10n.monthMay, l10n.monthJun, l10n.monthJul, l10n.monthAug,
+      l10n.monthSep, l10n.monthOct, l10n.monthNov, l10n.monthDec,
     ];
     final dia = diasSemana[fecha.weekday - 1];
-    return '$dia ${fecha.day} de ${meses[fecha.month - 1]}';
+    final mes = meses[fecha.month - 1];
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    return isEs
+        ? '$dia ${fecha.day} de $mes'
+        : '$dia, $mes ${fecha.day}';
   }
 
   String _formatVolumen(double v) {

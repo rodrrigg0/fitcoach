@@ -84,7 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
-                            '$restantes mensajes restantes hoy',
+                            AppLocalizations.of(context)!.chatMessagesRemaining(restantes),
                             style: TextStyle(
                               color: restantes > 5
                                   ? const Color(0xFF888888)

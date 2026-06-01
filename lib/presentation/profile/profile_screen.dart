@@ -55,9 +55,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _buildAvatarHeader(perfil, email),
                   if (perfil != null) ...[
-                    _buildStatsRow(provider),
-                    _buildPerfilSection(perfil),
-                    _buildEstadisticasSection(provider),
+                    _buildStatsRow(context, provider),
+                    _buildPerfilSection(context, perfil),
+                    _buildEstadisticasSection(context, provider),
                     _buildPesoSection(context, provider),
                   ],
                   _buildInformesSection(context),
@@ -148,20 +148,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── STATS ROW ─────────────────────────────────────────────
 
-  Widget _buildStatsRow(HomeProvider provider) {
+  Widget _buildStatsRow(BuildContext context, HomeProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           _statCard(
               '${provider.rachaActual}',
-              'Racha\nactual',
+              l10n.profileStreakLabel,
               Icons.local_fire_department,
               const Color(0xFFFF7043)),
           const SizedBox(width: 10),
           _statCard(
               '${provider.completadosPorDia.where((d) => d).length}',
-              'Días esta\nsemana',
+              l10n.profileDaysThisWeekLabel,
               Icons.fitness_center,
               AppColors.primary),
           const SizedBox(width: 10),
@@ -169,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               provider.perfil != null
                   ? '${_diasDesdeRegistro(provider.perfil!.fechaRegistro)}'
                   : '0',
-              'Días en\nFitCoach',
+              l10n.profileDaysInAppLabel,
               Icons.calendar_today,
               const Color(0xFF7E57C2)),
         ],
@@ -217,18 +218,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── PERFIL SECTION ────────────────────────────────────────
 
-  Widget _buildPerfilSection(UserProfile perfil) {
+  Widget _buildPerfilSection(BuildContext context, UserProfile perfil) {
+    final l10n = AppLocalizations.of(context)!;
     final items = [
-      (Icons.sports, 'Deporte',
+      (Icons.sports, l10n.profileLabelSport,
           perfil.deportes.isEmpty ? '—' : perfil.deportes.join(', ')),
-      (Icons.location_on_outlined, 'Lugar', perfil.lugarEntrenamiento),
-      (Icons.calendar_today, 'Días/semana',
-          '${perfil.diasEntrenamiento} días'),
-      (Icons.timer_outlined, 'Duración sesión',
+      (Icons.location_on_outlined, l10n.profileLabelPlace, perfil.lugarEntrenamiento),
+      (Icons.calendar_today, l10n.profileLabelDaysPerWeek,
+          l10n.profileDayCount(perfil.diasEntrenamiento)),
+      (Icons.timer_outlined, l10n.profileLabelSessionDuration,
           '${perfil.minutosSesion} min'),
-      (Icons.restaurant_menu, 'Dieta', perfil.tipoDieta),
-      (Icons.bedtime_outlined, 'Sueño habitual',
-          '${perfil.horasSueno} horas'),
+      (Icons.restaurant_menu, l10n.profileLabelDiet, perfil.tipoDieta),
+      (Icons.bedtime_outlined, l10n.profileLabelUsualSleep,
+          l10n.profileHourCount(perfil.horasSueno)),
     ];
 
     return Padding(
@@ -236,9 +238,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'MI PERFIL',
-            style: TextStyle(
+          Text(
+            l10n.profileMyProfile,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -301,7 +303,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── ESTADÍSTICAS ──────────────────────────────────────────
 
-  Widget _buildEstadisticasSection(HomeProvider provider) {
+  Widget _buildEstadisticasSection(BuildContext context, HomeProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
     final perfil = provider.perfil;
     final racha = provider.rachaActual;
     final diasEntrenados =
@@ -316,9 +319,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ESTADÍSTICAS',
-            style: TextStyle(
+          Text(
+            l10n.profileStatisticsSection,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -333,12 +336,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: Column(
               children: [
-                _statsRow('Racha actual', '$racha días', false),
+                _statsRow(l10n.profileStatStreak, l10n.profileDayCount(racha), false),
                 _statsRow(
-                    'Días entrenados esta semana',
-                    '$diasEntrenados días',
+                    l10n.profileStatDaysTrained,
+                    l10n.profileDayCount(diasEntrenados),
                     false),
-                _statsRow('Miembro desde', fechaStr, true),
+                _statsRow(l10n.profileStatMemberSince, fechaStr, true),
               ],
             ),
           ),
@@ -549,9 +552,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'INFORMES SEMANALES',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(ctx)!.profileWeeklyReportsSection,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -590,7 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Semana del $fechaStr',
+                    AppLocalizations.of(context)!.profileWeekOf(fechaStr),
                     style: const TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 14,
@@ -601,7 +604,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     children: [
                       Text(
-                        '${summary.sesionesCompletadas}/${summary.sesionesPlaneadas} sesiones',
+                        AppLocalizations.of(context)!.profileSessionsCount(
+                            summary.sesionesCompletadas,
+                            summary.sesionesPlaneadas),
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -609,7 +614,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        '⌀ ${summary.promedioEnergia.toStringAsFixed(1)} energía',
+                        AppLocalizations.of(context)!.profileAvgEnergy(
+                            summary.promedioEnergia.toStringAsFixed(1)),
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -627,9 +633,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: const Color(0xFFC8F135).withAlpha(32),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text(
-                'Ver informe',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.profileViewReport,
+                style: const TextStyle(
                   color: Color(0xFFC8F135),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -679,7 +685,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Informe semanal — ${_fechaLarga(summary.semanaInicio)}',
+                        AppLocalizations.of(context)!.profileWeeklyReportTitle(
+                            _fechaLarga(context, summary.semanaInicio)),
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 15,
@@ -710,9 +717,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 1.6,
                           ),
                         )
-                      : const Text(
-                          'Informe no disponible.',
-                          style: TextStyle(
+                      : Text(
+                          AppLocalizations.of(context)!.profileReportUnavailable,
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 14,
                           ),
@@ -726,12 +733,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  String _fechaLarga(DateTime fecha) {
-    const meses = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  String _fechaLarga(BuildContext context, DateTime fecha) {
+    final l10n = AppLocalizations.of(context)!;
+    final meses = [
+      l10n.monthJan, l10n.monthFeb, l10n.monthMar, l10n.monthApr,
+      l10n.monthMay, l10n.monthJun, l10n.monthJul, l10n.monthAug,
+      l10n.monthSep, l10n.monthOct, l10n.monthNov, l10n.monthDec,
     ];
-    return '${fecha.day} de ${meses[fecha.month - 1]} de ${fecha.year}';
+    final mes = meses[fecha.month - 1];
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    return isEs
+        ? '${fecha.day} de $mes de ${fecha.year}'
+        : '$mes ${fecha.day}, ${fecha.year}';
   }
 
   // ── SETTINGS + LOGOUT ────────────────────────────────────
@@ -794,31 +807,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     await TutorialManager.resetearTutorial();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tutorial restablecido. Vuelve al inicio para verlo.'),
-                          duration: Duration(seconds: 3),
+                        SnackBar(
+                          content: Text(AppLocalizations.of(context)!.profileTutorialReset),
+                          duration: const Duration(seconds: 3),
                         ),
                       );
                     }
                   },
                   behavior: HitTestBehavior.opaque,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     child: Row(
                       children: [
-                        Icon(Icons.help_outline,
+                        const Icon(Icons.help_outline,
                             color: AppColors.textSecondary, size: 16),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Ver tutorial de nuevo',
-                            style: TextStyle(
+                            l10n.profileViewTutorialAgain,
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
                           ),
                         ),
-                        Icon(Icons.chevron_right,
+                        const Icon(Icons.chevron_right,
                             color: AppColors.textSecondary, size: 16),
                       ],
                     ),

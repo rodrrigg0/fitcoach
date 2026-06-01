@@ -6,6 +6,7 @@ import 'package:fitcoach/data/models/shopping_item.dart';
 import 'package:fitcoach/data/services/home_provider.dart';
 import 'package:fitcoach/l10n/app_localizations.dart';
 import 'package:fitcoach/shared/widgets/meal_detail_sheet.dart';
+import 'package:fitcoach/shared/widgets/plan_loading_bar.dart';
 import 'package:fitcoach/shared/widgets/tap_card.dart';
 
 void _confirmRegenerar(
@@ -13,24 +14,25 @@ void _confirmRegenerar(
   HomeProvider provider,
   VoidCallback onConfirm,
 ) {
+  final l10n = AppLocalizations.of(context)!;
   showDialog<void>(
     context: context,
     builder: (_) => AlertDialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      title: const Text(
-        '¿Regenerar plan?',
-        style: TextStyle(color: Colors.white),
+      title: Text(
+        l10n.trainingRegenDialogTitle,
+        style: const TextStyle(color: Colors.white),
       ),
-      content: const Text(
-        'Ya tienes un plan activo. Regenerarlo consumirá créditos de IA. ¿Estás seguro?',
-        style: TextStyle(color: Color(0xFF888888)),
+      content: Text(
+        l10n.trainingRegenDialogContent,
+        style: const TextStyle(color: Color(0xFF888888)),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(color: Color(0xFF888888)),
+          child: Text(
+            l10n.cancel,
+            style: const TextStyle(color: Color(0xFF888888)),
           ),
         ),
         TextButton(
@@ -38,9 +40,9 @@ void _confirmRegenerar(
             Navigator.of(context).pop();
             onConfirm();
           },
-          child: const Text(
-            'Regenerar',
-            style: TextStyle(color: Color(0xFFC8F135)),
+          child: Text(
+            l10n.nutritionRegenerate,
+            style: const TextStyle(color: Color(0xFFC8F135)),
           ),
         ),
       ],
@@ -74,24 +76,30 @@ class NutritionScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(context, provider),
-                  if (!hasPlan)
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: _buildEmptyState(context, provider),
-                      ),
-                    )
-                  else ...[
-                    _buildTabBar(context),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _buildTabHoy(context, provider),
-                          _buildTabSemana(context, provider),
-                          _buildTabCompra(context, provider),
-                        ],
-                      ),
+                  Expanded(
+                    child: PlanGeneratorView(
+                      isLoading: provider.cargandoNutricion,
+                      type: PlanType.nutrition,
+                      child: !hasPlan
+                          ? SingleChildScrollView(
+                              child: _buildEmptyState(context, provider),
+                            )
+                          : Column(
+                              children: [
+                                _buildTabBar(context),
+                                Expanded(
+                                  child: TabBarView(
+                                    children: [
+                                      _buildTabHoy(context, provider),
+                                      _buildTabSemana(context, provider),
+                                      _buildTabCompra(context, provider),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
@@ -592,7 +600,7 @@ class NutritionScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TOTALES DEL DÍA',
+            AppLocalizations.of(context)!.nutritionDailyTotals,
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
@@ -603,13 +611,13 @@ class NutritionScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _totalMacro(AppLocalizations.of(context)!.homeMacroProtein, '${protTotal.round()}g',
+              _totalMacro(context, AppLocalizations.of(context)!.homeMacroProtein, '${protTotal.round()}g',
                   plan.proteinasObjetivo, const Color(0xFF4FC3F7)),
               const SizedBox(width: 10),
-              _totalMacro(AppLocalizations.of(context)!.homeMacroCarbs, '${carbTotal.round()}g',
+              _totalMacro(context, AppLocalizations.of(context)!.homeMacroCarbs, '${carbTotal.round()}g',
                   plan.carbosObjetivo, const Color(0xFFFFB74D)),
               const SizedBox(width: 10),
-              _totalMacro(AppLocalizations.of(context)!.homeMacroFat, '${grasTotal.round()}g',
+              _totalMacro(context, AppLocalizations.of(context)!.homeMacroFat, '${grasTotal.round()}g',
                   plan.grasasObjetivo, const Color(0xFFEF9A9A)),
             ],
           ),
@@ -619,7 +627,7 @@ class NutritionScreen extends StatelessWidget {
   }
 
   Widget _totalMacro(
-      String label, String valor, double objetivo, Color color) {
+      BuildContext context, String label, String valor, double objetivo, Color color) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,7 +653,7 @@ class NutritionScreen extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 10)),
-          Text('de ${objetivo.round()}g',
+          Text(AppLocalizations.of(context)!.nutritionMacroGoalOf(objetivo.round()),
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 10)),
         ],
@@ -693,13 +701,10 @@ class NutritionScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
-          if (provider.cargandoNutricion)
-            const CircularProgressIndicator(color: AppColors.primary)
-          else
-            ElevatedButton(
-              onPressed: () => provider.generarPlanNutricion(),
-              child: Text(AppLocalizations.of(context)!.nutritionGeneratePlan),
-            ),
+          ElevatedButton(
+            onPressed: () => provider.generarPlanNutricion(),
+            child: Text(AppLocalizations.of(context)!.nutritionGeneratePlan),
+          ),
         ],
       ),
     );
@@ -1214,6 +1219,7 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
   }
 
   Future<void> _guardar(BuildContext ctx) async {
+    final goalsUpdatedMsg = AppLocalizations.of(ctx)!.nutritionGoalsUpdated;
     setState(() => _guardando = true);
     final scaffoldMessenger = ScaffoldMessenger.of(ctx);
     Navigator.of(ctx).pop();
@@ -1224,7 +1230,7 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
     );
     scaffoldMessenger.showSnackBar(
       SnackBar(
-        content: const Text('Objetivos actualizados'),
+        content: Text(goalsUpdatedMsg),
         backgroundColor: AppColors.backgroundCard,
         behavior: SnackBarBehavior.floating,
         shape:
@@ -1279,10 +1285,10 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
                     children: [
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Ajustar macros',
-                              style: TextStyle(
+                              AppLocalizations.of(context)!.nutritionAdjustMacros,
+                              style: const TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -1345,24 +1351,22 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      _sliderRow('Proteínas', _proteinas, 50, 350, 'g',
+                      _sliderRow(AppLocalizations.of(context)!.nutritionProtein, _proteinas, 50, 350, 'g',
                           const Color(0xFF4FC3F7),
                           (v) => setState(() => _proteinas = v)),
-                      _sliderRow('Carbohidratos', _carbos, 50, 600, 'g',
+                      _sliderRow(AppLocalizations.of(context)!.nutritionCarbohydrates, _carbos, 50, 600, 'g',
                           const Color(0xFFFFB74D),
                           (v) => setState(() => _carbos = v)),
-                      _sliderRow('Grasas', _grasas, 20, 200, 'g',
+                      _sliderRow(AppLocalizations.of(context)!.homeMacroFat, _grasas, 20, 200, 'g',
                           const Color(0xFFEF9A9A),
                           (v) => setState(() => _grasas = v)),
                       if (_warnProtein) ...[
                         const SizedBox(height: 8),
-                        _warning(
-                            'Proteínas por debajo de 1.6g/kg. Puede limitar la recuperación muscular.'),
+                        _warning(AppLocalizations.of(context)!.nutritionWarnProtein),
                       ],
                       if (_warnCalorias) ...[
                         const SizedBox(height: 8),
-                        _warning(
-                            'Total inferior a 1200 kcal. No recomendado sin supervisión médica.'),
+                        _warning(AppLocalizations.of(context)!.nutritionWarnCalories),
                       ],
                       const SizedBox(height: 20),
                       Row(
@@ -1378,8 +1382,8 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: const Text('Restaurar automático',
-                                  style: TextStyle(fontSize: 13)),
+                              child: Text(AppLocalizations.of(context)!.nutritionRestoreAuto,
+                                  style: const TextStyle(fontSize: 13)),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1395,8 +1399,8 @@ class _MacroAdjustSheetState extends State<_MacroAdjustSheet> {
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: const Text('Guardar cambios',
-                                  style: TextStyle(
+                              child: Text(AppLocalizations.of(context)!.nutritionSaveChanges,
+                                  style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600)),
                             ),
