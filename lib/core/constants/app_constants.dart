@@ -14,4 +14,6 @@ class AppConstants {
   static const String routeSessionDetail = '/session-detail';
   static const String routeActiveSession = '/active-session';
   static const String routeProfile = '/profile';
+  static const String routeLegalTerms = '/legal/terms';
+  static const String routeLegalPrivacy = '/legal/privacy';
 }

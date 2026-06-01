@@ -61,6 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildPesoSection(context, provider),
                   ],
                   _buildInformesSection(context),
+                  _buildLegalSection(context),
                   _buildSettingsSection(context),
                   const SizedBox(height: 40),
                 ],
@@ -745,6 +746,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return isEs
         ? '${fecha.day} de $mes de ${fecha.year}'
         : '$mes ${fecha.day}, ${fecha.year}';
+  }
+
+  // ── LEGAL ─────────────────────────────────────────────────
+
+  Widget _buildLegalSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.profileSectionLegal,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.backgroundCard,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: () => context.push(AppConstants.routeLegalTerms),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.description_outlined,
+                            color: AppColors.textSecondary, size: 16),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            l10n.legalTermsTitle,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right,
+                            color: AppColors.textSecondary, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(
+                    height: 0.5, thickness: 0.5, color: AppColors.border),
+                GestureDetector(
+                  onTap: () => context.push(AppConstants.routeLegalPrivacy),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.shield_outlined,
+                            color: AppColors.textSecondary, size: 16),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            l10n.legalPrivacyTitle,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right,
+                            color: AppColors.textSecondary, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── SETTINGS + LOGOUT ────────────────────────────────────

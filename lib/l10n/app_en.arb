@@ -243,5 +243,16 @@
   "nutritionLoadPhase0": "Calculating your macronutrients...",
   "nutritionLoadPhase1": "Planning weekly menu...",
   "nutritionLoadPhase2": "Adjusting to your budget...",
-  "nutritionLoadPhase3": "Generating shopping list..."
+  "nutritionLoadPhase3": "Generating shopping list...",
+
+  "registerTermsAnd": " and the ",
+  "registerPrivacyLink": "Privacy policy",
+
+  "legalTermsTitle": "Terms and conditions",
+  "legalPrivacyTitle": "Privacy policy",
+  "profileSectionLegal": "LEGAL",
+
+  "legalTermsContent": "Last updated: May 2026\n\n1. Service Description\nFitCoach is an AI-powered sports and nutritional advisory application. The content generated does not constitute professional medical advice and must not replace consultation with a qualified health professional.\n\n2. Medical Disclaimer\nBefore starting any training or nutrition plan, users with existing health conditions, injuries or medical history are solely responsible for consulting a physician or specialist.\n\n3. No Warranties\nThe service is provided \"as is\" without warranties of any kind. FitCoach makes no guarantee regarding the accuracy, completeness or suitability of the generated plans for any specific purpose.\n\n4. Modifications\nFitCoach reserves the right to modify these terms at any time. Users will be notified of significant changes via the app.\n\n5. Free Plan\nThe free plan includes limited daily AI interactions. Usage limits may be adjusted at any time.\n\n6. Premium Plan\nThe premium plan offers unlimited interactions. Subscription pricing is displayed in the app. You may cancel at any time; cancellation takes effect at the end of the current billing period.\n\n7. Acceptance\nBy creating an account you confirm that you have read and accept these Terms and Conditions.",
+
+  "legalPrivacyContent": "Data Controller: Rodrigo Bachiller Sanz\nContact: rodrigobachillersanz@gmail.com\n\n1. Data Collected\nEmail address, weight, height, age, sex, sport, fitness level, injuries, sleep habits, diet type, food allergies, budget, chat conversations with the AI trainer, training logs, and weight history.\n\n2. Purpose\nTo generate personalized training and nutrition plans tailored to your profile.\n\n3. Legal Basis\nYour explicit consent given at registration (Article 6.1.a GDPR). Health-related data (injuries, diet, allergies) is treated as a special category under Article 9 GDPR.\n\n4. Data Storage\nYour data is stored in Firebase (Google Cloud servers). Google's privacy policy applies to infrastructure-level processing.\n\n5. Retention Period\nData is retained while your account is active. All personal data is permanently deleted upon account deletion.\n\n6. Third Parties\nYour data is not sold or shared with third parties. An anonymised summary of your profile is sent to the Anthropic API solely to generate your plans. Anthropic does not store this data according to their privacy policy.\n\n7. Local Storage\nThe app uses SharedPreferences to cache data locally on your device for performance purposes.\n\n8. Your Rights\nYou have the right to access, rectify, erase, port, and object to processing of your data. To exercise these rights, contact: rodrigobachillersanz@gmail.com"
 }

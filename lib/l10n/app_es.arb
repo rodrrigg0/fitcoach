@@ -536,5 +536,23 @@
   "nutritionLoadPhase2": "Ajustando al presupuesto...",
   "@nutritionLoadPhase2": {"description": "Nutrition load phase 40-60%"},
   "nutritionLoadPhase3": "Generando lista de la compra...",
-  "@nutritionLoadPhase3": {"description": "Nutrition load phase 60-80%"}
+  "@nutritionLoadPhase3": {"description": "Nutrition load phase 60-80%"},
+
+  "registerTermsAnd": " y la ",
+  "@registerTermsAnd": {"description": "Connector between terms and privacy links"},
+  "registerPrivacyLink": "Política de privacidad",
+  "@registerPrivacyLink": {"description": "Privacy policy link in register screen"},
+
+  "legalTermsTitle": "Términos y condiciones",
+  "@legalTermsTitle": {"description": "Legal screen title for terms"},
+  "legalPrivacyTitle": "Política de privacidad",
+  "@legalPrivacyTitle": {"description": "Legal screen title for privacy policy"},
+  "profileSectionLegal": "LEGAL",
+  "@profileSectionLegal": {"description": "Legal section header in profile"},
+
+  "legalTermsContent": "Última actualización: mayo 2026\n\n1. Descripción del servicio\nFitCoach es una aplicación de asesoramiento deportivo y nutricional basada en inteligencia artificial. El contenido generado no constituye consejo médico profesional y no debe sustituir la consulta con un profesional sanitario cualificado.\n\n2. Responsabilidad médica\nAntes de iniciar cualquier plan de entrenamiento o nutrición, los usuarios con condiciones de salud preexistentes, lesiones o historial médico son responsables de consultar a un médico o especialista.\n\n3. Servicio «tal cual»\nEl servicio se presta «tal cual», sin garantías de ningún tipo. FitCoach no garantiza la exactitud, integridad ni idoneidad de los planes generados para ningún propósito específico.\n\n4. Modificaciones\nFitCoach se reserva el derecho de modificar estos términos en cualquier momento. Se notificará a los usuarios de cambios significativos a través de la aplicación.\n\n5. Plan gratuito\nEl plan gratuito incluye un número limitado de interacciones diarias con la IA. Los límites de uso pueden ajustarse en cualquier momento.\n\n6. Plan premium\nEl plan premium ofrece interacciones ilimitadas. El precio de la suscripción se muestra en la aplicación. Puedes cancelar en cualquier momento; la cancelación surte efecto al final del período de facturación en curso.\n\n7. Aceptación\nAl crear una cuenta confirmas que has leído y aceptas estos Términos y Condiciones.",
+  "@legalTermsContent": {"description": "Full terms and conditions text"},
+
+  "legalPrivacyContent": "Responsable del tratamiento: Rodrigo Bachiller Sanz\nContacto: rodrigobachillersanz@gmail.com\n\n1. Datos recogidos\nDirección de correo electrónico, peso, altura, edad, sexo, deporte, nivel de condición física, lesiones, hábitos de sueño, tipo de dieta, alergias alimentarias, presupuesto, conversaciones del chat con el entrenador IA, registros de entrenamiento e historial de peso.\n\n2. Finalidad\nGenerar planes de entrenamiento y nutrición personalizados adaptados a tu perfil.\n\n3. Base legal\nConsentimiento explícito prestado al registrarte (artículo 6.1.a del RGPD). Los datos relacionados con la salud (lesiones, dieta, alergias) se tratan como categoría especial conforme al artículo 9 del RGPD.\n\n4. Almacenamiento\nTus datos se almacenan en Firebase (servidores de Google Cloud). La política de privacidad de Google aplica al procesamiento a nivel de infraestructura.\n\n5. Período de conservación\nLos datos se conservan mientras la cuenta esté activa. Todos los datos personales se eliminan definitivamente al borrar la cuenta.\n\n6. Terceros\nTus datos no se venden ni comparten con terceros. Un resumen anonimizado de tu perfil se envía a la API de Anthropic únicamente para generar tus planes. Anthropic no almacena estos datos según su política de privacidad.\n\n7. Caché local\nLa aplicación utiliza SharedPreferences para almacenar datos en caché localmente en tu dispositivo por motivos de rendimiento.\n\n8. Tus derechos\nTienes derecho de acceso, rectificación, supresión, portabilidad y oposición al tratamiento de tus datos. Para ejercerlos, contacta en: rodrigobachillersanz@gmail.com",
+  "@legalPrivacyContent": {"description": "Full privacy policy text"}
 }

@@ -12,6 +12,7 @@ import 'package:fitcoach/presentation/home/main_screen.dart';
 import 'package:fitcoach/presentation/training/session_detail_screen.dart';
 import 'package:fitcoach/presentation/training/active_session_screen.dart';
 import 'package:fitcoach/presentation/profile/profile_screen.dart';
+import 'package:fitcoach/presentation/legal/legal_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -93,6 +94,20 @@ class AppRouter {
         path: AppConstants.routeProfile,
         pageBuilder: (context, state) => slideHorizontal(
           child: const ProfileScreen(),
+          state: state,
+        ),
+      ),
+      GoRoute(
+        path: AppConstants.routeLegalTerms,
+        pageBuilder: (context, state) => slideHorizontal(
+          child: const LegalScreen(type: 'terms'),
+          state: state,
+        ),
+      ),
+      GoRoute(
+        path: AppConstants.routeLegalPrivacy,
+        pageBuilder: (context, state) => slideHorizontal(
+          child: const LegalScreen(type: 'privacy'),
           state: state,
         ),
       ),

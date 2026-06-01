@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  final _termsRecognizer = TapGestureRecognizer();
+  final _privacyRecognizer = TapGestureRecognizer();
+
   bool _nameChanged = false;
   bool _emailChanged = false;
   bool _passwordChanged = false;
@@ -34,6 +38,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
     super.dispose();
   }
 
@@ -239,7 +245,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextSpan(text: l10n.registerTerms),
                         TextSpan(
                           text: l10n.registerTermsLink,
-                          style: const TextStyle(color: AppColors.primary),
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primary,
+                          ),
+                          recognizer: _termsRecognizer
+                            ..onTap = () => context.push(AppConstants.routeLegalTerms),
+                        ),
+                        TextSpan(text: l10n.registerTermsAnd),
+                        TextSpan(
+                          text: l10n.registerPrivacyLink,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primary,
+                          ),
+                          recognizer: _privacyRecognizer
+                            ..onTap = () => context.push(AppConstants.routeLegalPrivacy),
                         ),
                       ],
                     ),
