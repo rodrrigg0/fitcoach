@@ -1,37 +1,41 @@
-# Sistema de Procesamiento de Transacciones Financieras
+# FitCoach - AI Personal Fitness Assistant
 
-Sistema backend empresarial que procesa transferencias bancarias, detecta fraude en tiempo real y mantiene auditoría completa de operaciones.
+Aplicación multiplataforma completa de entrenamiento personal. Genera planes de fitness y nutrición personalizados con IA, seguimiento de progreso y asesoramiento 24/7.
 
 ## 🛠️ Stack
 
-- **Backend**: Java 11+, Spring Boot
-- **Base de Datos**: MySQL
-- **DevOps**: Docker, Docker Compose
-- **CI/CD**: GitHub Actions
-- **Calidad**: SonarQube
-- **Frontend**: Flutter (app companion)
+- **Frontend**: Flutter 3.0+ (Dart)
+- **Arquitectura**: Clean Architecture
+- **Estado**: Provider / Riverpod
+- **Backend/Datos**: Firebase (Auth, Firestore, Storage)
+- **IA**: Claude API + OpenAI
+- **Plataformas**: Android, iOS, Web, Windows, Linux, macOS
 
 ## 🎯 Funcionalidades
 
-- Procesamiento de transferencias bancarias con validación multi-capa
-- Detección automática de fraude mediante análisis de patrones
-- Auditoría completa de todas las operaciones
-- Generación de reportes financieros y operacionales
-- Integración continua automatizada con GitHub Actions
+- Onboarding inteligente con chat IA
+- Autenticación con Firebase (email, Google, Apple)
+- Generación automática de planes de entrenamiento personalizados
+- Módulo de nutrición con macros y calorías
+- Chat IA 24/7 para asesoramiento fitness
+- Seguimiento de progreso con gráficas y estadísticas
+- Notificaciones push de recordatorios
+- Modo offline con sincronización
 
 ## 🏗️ Arquitectura
 
-Arquitectura en capas:
-- **Controller**: Endpoints REST
-- **Service**: Lógica de negocio y validación de fraude
-- **Repository**: Acceso a datos con JPA/Hibernate
-- **Entity**: Modelos persistentes en MySQL
+Clean Architecture con 3 capas:
+- **Presentation**: Screens, Widgets, Estado (Provider/Riverpod)
+- **Domain**: Entities, Repositorios abstractos, Use Cases
+- **Data**: Firebase Datasources, Mappers, Implementación de Repositorios
 
 ## 🤖 Integración con Claude API
 
-La aplicación utiliza Claude API para análisis avanzado de patrones de fraude:
-- Validación inteligente de transacciones sospechosas
-- Generación de reportes de riesgo con análisis contextual
-- Sugerencias de mejora en seguridad basadas en IA
+El núcleo inteligente de FitCoach utiliza Claude API para:
+- **Onboarding conversacional**: Chat natural que entiende contexto del usuario
+- **Generación de planes**: Creación de rutinas y dietas personalizadas con IA
+- **Adaptación dinámica**: Ajuste de planes según progreso y retroalimentación
+- **Chat 24/7**: Asistente que responde preguntas sobre fitness, nutrición y lesiones
+- **Análisis contextual**: Entiende historial completo del usuario para recomendaciones precisas
 
 ---
