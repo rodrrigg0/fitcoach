@@ -1,17 +1,37 @@
-# fitcoach
+# Sistema de Procesamiento de Transacciones Financieras
 
-A new Flutter project.
+Sistema backend empresarial que procesa transferencias bancarias, detecta fraude en tiempo real y mantiene auditoría completa de operaciones.
 
-## Getting Started
+## 🛠️ Stack
 
-This project is a starting point for a Flutter application.
+- **Backend**: Java 11+, Spring Boot
+- **Base de Datos**: MySQL
+- **DevOps**: Docker, Docker Compose
+- **CI/CD**: GitHub Actions
+- **Calidad**: SonarQube
+- **Frontend**: Flutter (app companion)
 
-A few resources to get you started if this is your first Flutter project:
+## 🎯 Funcionalidades
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Procesamiento de transferencias bancarias con validación multi-capa
+- Detección automática de fraude mediante análisis de patrones
+- Auditoría completa de todas las operaciones
+- Generación de reportes financieros y operacionales
+- Integración continua automatizada con GitHub Actions
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🏗️ Arquitectura
+
+Arquitectura en capas:
+- **Controller**: Endpoints REST
+- **Service**: Lógica de negocio y validación de fraude
+- **Repository**: Acceso a datos con JPA/Hibernate
+- **Entity**: Modelos persistentes en MySQL
+
+## 🤖 Integración con Claude API
+
+La aplicación utiliza Claude API para análisis avanzado de patrones de fraude:
+- Validación inteligente de transacciones sospechosas
+- Generación de reportes de riesgo con análisis contextual
+- Sugerencias de mejora en seguridad basadas en IA
+
+---
